@@ -1,1 +1,12 @@
 lemma-platform/
+.lemma-platform/
+.env
+.env.local
+.env.development.local
+__pycache__/
+*.pyc
+.local/
+node_modules/
+dist/
+.idea/
+.vscode/
