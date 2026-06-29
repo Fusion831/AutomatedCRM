@@ -1,0 +1,59 @@
+{
+  "name": "contacts",
+  "primary_key_column": "id",
+  "enable_rls": false,
+  "visibility": "POD",
+  "columns": [
+    {
+      "name": "name",
+      "type": "TEXT",
+      "required": true
+    },
+    {
+      "name": "relationship_state",
+      "type": "ENUM",
+      "required": true,
+      "default": "mutual_exploration",
+      "options": [
+        "waiting_on_me",
+        "waiting_on_them",
+        "mutual_exploration",
+        "blocked",
+        "cooling",
+        "reengagement_candidate"
+      ]
+    },
+    {
+      "name": "who_are_they",
+      "type": "TEXT",
+      "required": false
+    },
+    {
+      "name": "why_talking",
+      "type": "TEXT",
+      "required": false
+    },
+    {
+      "name": "memory_confidence",
+      "type": "JSON",
+      "required": false
+    },
+    {
+      "name": "priority_score",
+      "type": "INTEGER",
+      "required": true,
+      "default": 0
+    },
+    {
+      "name": "priority_reasons",
+      "type": "JSON",
+      "required": false
+    },
+    {
+      "name": "last_interaction",
+      "type": "DATETIME",
+      "required": false
+    }
+  ],
+  "config": {}
+}

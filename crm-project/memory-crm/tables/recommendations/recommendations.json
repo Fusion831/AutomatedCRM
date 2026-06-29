@@ -1,0 +1,47 @@
+{
+  "name": "recommendations",
+  "primary_key_column": "id",
+  "enable_rls": false,
+  "visibility": "POD",
+  "columns": [
+    {
+      "name": "contact_id",
+      "type": "UUID",
+      "required": true,
+      "foreign_key": {
+        "references": "contacts.id"
+      }
+    },
+    {
+      "name": "rec_type",
+      "type": "ENUM",
+      "required": true,
+      "options": [
+        "reconnect_email",
+        "action_task"
+      ]
+    },
+    {
+      "name": "draft_content",
+      "type": "TEXT",
+      "required": false
+    },
+    {
+      "name": "reason_why",
+      "type": "TEXT",
+      "required": true
+    },
+    {
+      "name": "status",
+      "type": "ENUM",
+      "required": true,
+      "default": "pending",
+      "options": [
+        "pending",
+        "accepted",
+        "dismissed"
+      ]
+    }
+  ],
+  "config": {}
+}

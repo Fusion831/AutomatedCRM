@@ -1,0 +1,53 @@
+{
+  "name": "relationship_state_history",
+  "primary_key_column": "id",
+  "enable_rls": false,
+  "visibility": "POD",
+  "columns": [
+    {
+      "name": "contact_id",
+      "type": "UUID",
+      "required": true,
+      "foreign_key": {
+        "references": "contacts.id"
+      }
+    },
+    {
+      "name": "old_state",
+      "type": "ENUM",
+      "required": true,
+      "options": [
+        "waiting_on_me",
+        "waiting_on_them",
+        "mutual_exploration",
+        "blocked",
+        "cooling",
+        "reengagement_candidate"
+      ]
+    },
+    {
+      "name": "new_state",
+      "type": "ENUM",
+      "required": true,
+      "options": [
+        "waiting_on_me",
+        "waiting_on_them",
+        "mutual_exploration",
+        "blocked",
+        "cooling",
+        "reengagement_candidate"
+      ]
+    },
+    {
+      "name": "reason",
+      "type": "TEXT",
+      "required": false
+    },
+    {
+      "name": "changed_at",
+      "type": "DATETIME",
+      "required": true
+    }
+  ],
+  "config": {}
+}

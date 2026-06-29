@@ -1,0 +1,61 @@
+{
+  "name": "commitments",
+  "primary_key_column": "id",
+  "enable_rls": false,
+  "visibility": "POD",
+  "columns": [
+    {
+      "name": "contact_id",
+      "type": "UUID",
+      "required": true,
+      "foreign_key": {
+        "references": "contacts.id"
+      }
+    },
+    {
+      "name": "interaction_id",
+      "type": "UUID",
+      "required": true,
+      "foreign_key": {
+        "references": "interactions.id"
+      }
+    },
+    {
+      "name": "owner",
+      "type": "ENUM",
+      "required": true,
+      "options": [
+        "founder",
+        "contact",
+        "shared"
+      ]
+    },
+    {
+      "name": "description",
+      "type": "TEXT",
+      "required": true
+    },
+    {
+      "name": "status",
+      "type": "ENUM",
+      "required": true,
+      "default": "open",
+      "options": [
+        "open",
+        "completed",
+        "dismissed"
+      ]
+    },
+    {
+      "name": "confidence",
+      "type": "INTEGER",
+      "required": true
+    },
+    {
+      "name": "due_date",
+      "type": "DATE",
+      "required": false
+    }
+  ],
+  "config": {}
+}
