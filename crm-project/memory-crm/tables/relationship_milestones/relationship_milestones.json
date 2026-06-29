@@ -34,6 +34,11 @@
       "name": "occurred_at",
       "type": "DATETIME",
       "required": true
+    },
+    {
+      "name": "evidence_quote",
+      "type": "TEXT",
+      "required": false
     }
   ],
   "config": {}

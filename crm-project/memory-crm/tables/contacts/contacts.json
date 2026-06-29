@@ -53,6 +53,11 @@
       "name": "last_interaction",
       "type": "DATETIME",
       "required": false
+    },
+    {
+      "name": "expected_next_touch_date",
+      "type": "DATE",
+      "required": false
     }
   ],
   "config": {}

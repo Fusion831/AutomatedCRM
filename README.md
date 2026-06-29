@@ -7,7 +7,7 @@ Traditional CRMs (like HubSpot or Salesforce) are built for sales forecasting, n
 
 ---
 
-## 🚀 Key Product Differentiators
+## Key Product Differentiators
 
 ### 1. The First-Class "Relationship Memory" Object
 Instead of unstructured text notes or dry contact cards, MemoryCRM maintains a structured thesis on every contact:

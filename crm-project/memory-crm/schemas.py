@@ -56,6 +56,7 @@ class Contact(BaseModel):
     priority_score: int = Field(default=0, ge=0)
     priority_reasons: Optional[List[str]] = Field(default_factory=list)
     last_interaction: Optional[datetime] = None
+    expected_next_touch_date: Optional[date] = None
     created_at: datetime = Field(default_factory=datetime.utcnow)
     updated_at: datetime = Field(default_factory=datetime.utcnow)
 
@@ -95,6 +96,7 @@ class RelationshipMilestone(BaseModel):
     summary: str
     importance_score: conint(ge=1, le=100) # 1-100 score
     occurred_at: datetime
+    evidence_quote: Optional[str] = None
     created_at: datetime = Field(default_factory=datetime.utcnow)
 
     class Config:
@@ -110,6 +112,7 @@ class Commitment(BaseModel):
     status: CommitmentStatus = CommitmentStatus.open
     confidence: conint(ge=0, le=100) = 100
     due_date: Optional[date] = None
+    evidence_quote: Optional[str] = None
     created_at: datetime = Field(default_factory=datetime.utcnow)
     updated_at: datetime = Field(default_factory=datetime.utcnow)
 

@@ -55,6 +55,11 @@
       "name": "due_date",
       "type": "DATE",
       "required": false
+    },
+    {
+      "name": "evidence_quote",
+      "type": "TEXT",
+      "required": false
     }
   ],
   "config": {}
