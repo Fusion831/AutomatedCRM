@@ -24,6 +24,17 @@
       ]
     },
     {
+      "name": "tier",
+      "type": "ENUM",
+      "required": true,
+      "default": "B",
+      "options": [
+        "A",
+        "B",
+        "C"
+      ]
+    },
+    {
       "name": "who_are_they",
       "type": "TEXT",
       "required": false

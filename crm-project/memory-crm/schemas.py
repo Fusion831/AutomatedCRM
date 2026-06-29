@@ -15,6 +15,11 @@ class RelationshipState(str, Enum):
     cooling = "cooling"
     reengagement_candidate = "reengagement_candidate"
 
+class RelationshipTier(str, Enum):
+    A = "A"
+    B = "B"
+    C = "C"
+
 class InteractionType(str, Enum):
     email = "email"
     meeting = "meeting"
@@ -47,6 +52,7 @@ class Contact(BaseModel):
     id: UUID = Field(default_factory=uuid4)
     name: str
     relationship_state: RelationshipState = RelationshipState.mutual_exploration
+    tier: RelationshipTier = RelationshipTier.B
     who_are_they: Optional[str] = None
     why_talking: Optional[str] = None
     memory_confidence: Optional[dict[str, float]] = Field(
