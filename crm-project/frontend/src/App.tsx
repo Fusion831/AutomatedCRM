@@ -10,7 +10,6 @@ import {
   Clock, 
   Calendar, 
   TrendingUp, 
-  MessageSquare, 
   Layers, 
   CheckSquare, 
   ChevronDown,
@@ -383,8 +382,6 @@ export default function App() {
     });
   };
 
-
-
   const getPriorityRingColor = (score: number) => {
     if (score >= 70) return '#EF4444';
     if (score >= 40) return '#F59E0B';
@@ -399,28 +396,26 @@ export default function App() {
   };
 
   return (
-    <div className="min-h-screen text-slate-100 flex flex-col">
+    <div className="app-wrapper">
       {/* Top Banner / Switcher */}
-      <header className="sticky top-0 z-40 bg-slate-950/80 backdrop-blur-md border-b border-slate-800/80 py-4 px-6 flex flex-col md:flex-row items-center justify-between gap-4">
-        <div className="flex items-center gap-3">
-          <div className="bg-gradient-to-tr from-sky-400 to-indigo-500 p-2.5 rounded-xl shadow-lg shadow-indigo-500/10">
-            <Sparkles className="h-6 w-6 text-slate-900" />
+      <header className="app-header">
+        <div className="brand-section">
+          <div className="logo-icon-container">
+            <Sparkles className="logo-icon" />
           </div>
           <div>
-            <h1 className="text-xl font-bold tracking-tight bg-gradient-to-r from-sky-400 to-indigo-400 bg-clip-text text-transparent">
-              Lemma CRM
-            </h1>
-            <p className="text-xs text-slate-400 font-medium">Relationship Operating System</p>
+            <h1 className="brand-title">Lemma CRM</h1>
+            <p className="brand-subtitle">Relationship Operating System</p>
           </div>
         </div>
 
-        <div className="flex flex-wrap items-center gap-3 w-full md:w-auto justify-end">
-          <div className="flex items-center gap-2 bg-slate-900/90 border border-slate-800 rounded-lg px-3 py-1.5 w-full md:w-64">
-            <User className="h-4 w-4 text-slate-400" />
+        <div className="controls-section">
+          <div className="selector-container">
+            <User className="selector-icon" />
             <select 
               value={selectedContactId}
               onChange={handleContactChange}
-              className="bg-transparent text-sm w-full outline-none border-none text-slate-200 cursor-pointer font-medium"
+              className="contact-select"
             >
               <option value="sarah_jenkins">Sarah Jenkins (NextGen AI)</option>
               <option value="amit_patel">Amit Patel (CloudShield)</option>
@@ -432,19 +427,19 @@ export default function App() {
             </select>
           </div>
 
-          <div className="flex bg-slate-900 border border-slate-800 rounded-lg p-0.5">
+          <div className="tab-switcher">
             <button 
               onClick={() => setActiveTab('ui')}
-              className={`px-3 py-1.5 rounded-md text-xs font-semibold flex items-center gap-1.5 transition-all ${activeTab === 'ui' ? 'bg-slate-800 text-sky-400' : 'text-slate-400 hover:text-slate-200'}`}
+              className={`tab-btn ${activeTab === 'ui' ? 'active' : ''}`}
             >
-              <Eye className="h-3.5 w-3.5" />
+              <Eye style={{ width: '14px', height: '14px' }} />
               UI Screen
             </button>
             <button 
               onClick={() => setActiveTab('queries')}
-              className={`px-3 py-1.5 rounded-md text-xs font-semibold flex items-center gap-1.5 transition-all ${activeTab === 'queries' ? 'bg-slate-800 text-sky-400' : 'text-slate-400 hover:text-slate-200'}`}
+              className={`tab-btn ${activeTab === 'queries' ? 'active' : ''}`}
             >
-              <Database className="h-3.5 w-3.5" />
+              <Database style={{ width: '14px', height: '14px' }} />
               Lemma Queries
             </button>
           </div>
@@ -453,32 +448,39 @@ export default function App() {
 
       {/* Loading State Simulator */}
       {selectedContactId === 'loading' && (
-        <div className="flex-1 max-w-7xl w-full mx-auto p-6 grid grid-cols-1 lg:grid-cols-3 gap-6 animate-pulse">
-          <div className="lg:col-span-1 space-y-6">
-            <div className="h-64 bg-slate-900/50 border border-slate-800/50 rounded-2xl"></div>
-            <div className="h-48 bg-slate-900/50 border border-slate-800/50 rounded-2xl"></div>
+        <main className="dashboard-container">
+          <div className="column-left">
+            <div className="glass-panel skeleton-card">
+              <div className="skeleton-pulse"></div>
+            </div>
+            <div className="glass-panel skeleton-card">
+              <div className="skeleton-pulse"></div>
+            </div>
           </div>
-          <div className="lg:col-span-2 space-y-6">
-            <div className="h-44 bg-slate-900/50 border border-slate-800/50 rounded-2xl"></div>
-            <div className="h-56 bg-slate-900/50 border border-slate-800/50 rounded-2xl"></div>
-            <div className="h-40 bg-slate-900/50 border border-slate-800/50 rounded-2xl"></div>
+          <div className="column-right">
+            <div className="glass-panel skeleton-card" style={{ height: '200px' }}>
+              <div className="skeleton-pulse"></div>
+            </div>
+            <div className="glass-panel skeleton-card" style={{ height: '250px' }}>
+              <div className="skeleton-pulse"></div>
+            </div>
           </div>
-        </div>
+        </main>
       )}
 
       {/* Empty State Simulator */}
       {selectedContactId === 'empty' && (
-        <div className="flex-1 flex flex-col items-center justify-center p-8 max-w-md mx-auto text-center">
-          <div className="bg-slate-900 border border-slate-800 p-4 rounded-full mb-4">
-            <Sparkles className="h-8 w-8 text-sky-400/50" />
+        <div className="empty-wrapper">
+          <div className="empty-icon-circle">
+            <Sparkles className="empty-icon" />
           </div>
-          <h2 className="text-xl font-bold mb-2">No relationship data yet</h2>
-          <p className="text-slate-400 text-sm mb-6">
+          <h2 className="empty-headline">No relationship data yet</h2>
+          <p className="empty-body">
             Once you log a call, note, email thread or Slack integration, the Consolidated Extractor will automatically construct contact memories, extract milestones, and create commitments.
           </p>
           <button 
             onClick={() => setSelectedContactId('sarah_jenkins')}
-            className="px-4 py-2 bg-gradient-to-r from-sky-400 to-indigo-500 hover:from-sky-500 hover:to-indigo-600 text-slate-900 font-semibold rounded-lg text-sm shadow-lg shadow-sky-500/10 transition-all"
+            className="cta-btn"
           >
             Load Demo Workspace
           </button>
@@ -487,84 +489,83 @@ export default function App() {
 
       {/* Active Workspace tabs */}
       {selectedContactId !== 'loading' && selectedContactId !== 'empty' && (
-        <main className="flex-1 max-w-7xl w-full mx-auto p-6">
+        <main className="dashboard-container">
           {activeTab === 'queries' ? (
-            <div className="space-y-6">
-              <div className="border border-slate-800/60 rounded-xl overflow-hidden bg-slate-900/40 backdrop-blur-md p-6">
-                <div className="flex items-center gap-2 mb-4">
-                  <Database className="h-5 w-5 text-sky-400" />
-                  <h3 className="font-bold text-slate-200">Datastore Queries (Lemma Pod Context)</h3>
+            <div style={{ gridColumn: 'span 2' }}>
+              <div className="glass-panel">
+                <div className="section-title-container">
+                  <Database className="section-icon cyan" />
+                  <h3 className="section-title">Datastore Queries (Lemma Pod Context)</h3>
                 </div>
-                <p className="text-xs text-slate-400 mb-6">
+                <p style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', marginBottom: '1.5rem' }}>
                   Lemma pod workflows interface directly with datastore tables. Below are the precise SQL-style queries generated by the relationship memory screen controller for contact <strong>{contact.name}</strong>.
                 </p>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '1.5rem' }}>
                   {Object.entries(LEMMA_QUERIES).map(([key, queryFn]) => (
-                    <div key={key} className="bg-slate-950 border border-slate-800 rounded-lg p-4 font-mono text-xs">
-                      <div className="text-sky-400/80 mb-2 font-semibold">-- {key.toUpperCase().replace('_', ' ')}</div>
-                      <pre className="text-slate-300 overflow-x-auto whitespace-pre-wrap">{queryFn(contact.id)}</pre>
+                    <div key={key} style={{ background: '#05070A', border: '1px solid var(--border-color)', borderRadius: '8px', padding: '1rem', fontFamily: 'monospace', fontSize: '0.75rem' }}>
+                      <div style={{ color: 'var(--accent-cyan)', marginBottom: '0.5rem', fontWeight: 'bold' }}>-- {key.toUpperCase().replace('_', ' ')}</div>
+                      <pre style={{ overflowX: 'auto', whiteSpace: 'pre-wrap', color: 'var(--text-primary)' }}>{queryFn(contact.id)}</pre>
                     </div>
                   ))}
                 </div>
               </div>
             </div>
           ) : (
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
-              
+            <>
               {/* LEFT COLUMN: Summary & Thesis */}
-              <div className="space-y-6 lg:col-span-1">
+              <div className="column-left">
                 
                 {/* SECTION 1: Relationship Summary */}
-                <div className="glass-panel p-6 space-y-5">
-                  <div className="flex items-start justify-between">
+                <div className="glass-panel">
+                  <div className="profile-header">
                     <div>
-                      <h2 className="text-2xl font-bold text-slate-100">{contact.name}</h2>
-                      <p className="text-sm text-sky-400 flex items-center gap-1.5 mt-1 font-medium">
-                        <Briefcase className="h-3.5 w-3.5" />
+                      <h2 className="profile-title">{contact.name}</h2>
+                      <p style={{ fontSize: '0.8rem', color: 'var(--accent-blue)', display: 'flex', alignItems: 'center', gap: '0.3rem', marginTop: '0.2rem', fontWeight: 600 }}>
+                        <Briefcase style={{ width: '12px', height: '12px' }} />
                         {contact.company}
                       </p>
                     </div>
                     {/* Ring score */}
-                    <div className="relative h-14 w-14 flex items-center justify-center">
-                      <svg className="absolute transform -rotate-90 w-full h-full">
-                        <circle cx="28" cy="28" r="24" stroke="rgba(255,255,255,0.04)" strokeWidth="4" fill="transparent" />
+                    <div className="priority-ring-wrapper">
+                      <svg className="priority-ring-svg">
+                        <circle cx="30" cy="30" r="26" stroke="rgba(255,255,255,0.03)" strokeWidth="3" fill="transparent" />
                         <circle 
-                          cx="28" 
-                          cy="28" 
-                          r="24" 
+                          cx="30" 
+                          cy="30" 
+                          r="26" 
                           stroke={getPriorityRingColor(contact.priority_score)} 
-                          strokeWidth="4" 
+                          strokeWidth="3" 
                           fill="transparent" 
-                          strokeDasharray={2 * Math.PI * 24}
-                          strokeDashoffset={2 * Math.PI * 24 * (1 - contact.priority_score / 100)} 
+                          strokeDasharray={2 * Math.PI * 26}
+                          strokeDashoffset={2 * Math.PI * 26 * (1 - contact.priority_score / 100)} 
                         />
                       </svg>
-                      <span className="text-xs font-bold font-mono">{contact.priority_score}</span>
+                      <span className="priority-score-text" style={{ color: getPriorityRingColor(contact.priority_score) }}>{contact.priority_score}</span>
                     </div>
                   </div>
 
                   {/* Relationship State Badge */}
-                  <div className="pt-2">
-                    <span className="text-[10px] font-bold tracking-wider uppercase text-slate-400 block mb-1">State</span>
-                    <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold border border-sky-500/20 bg-sky-950/20 text-sky-400">
-                      <Clock className="h-3 w-3" />
+                  <div className="badge-group">
+                    <span className="badge-label">Attention State</span>
+                    <span className="state-badge">
+                      <Clock style={{ width: '11px', height: '11px' }} />
                       {contact.relationship_state.replace(/_/g, ' ')}
                     </span>
                   </div>
 
                   {/* Why Talking */}
-                  <div>
-                    <span className="text-[10px] font-bold tracking-wider uppercase text-slate-400 block mb-1">Why We Are Talking</span>
-                    <p className="text-sm text-slate-300 leading-relaxed font-medium">{contact.why_talking}</p>
+                  <div className="badge-group">
+                    <span className="badge-label">Why We Are Talking</span>
+                    <p style={{ fontSize: '0.8rem', color: 'var(--text-primary)', lineHeight: 1.4, fontWeight: 500 }}>{contact.why_talking}</p>
                   </div>
 
                   {/* Key Drivers */}
-                  <div>
-                    <span className="text-[10px] font-bold tracking-wider uppercase text-slate-400 block mb-1.5">What They Care About</span>
-                    <div className="flex flex-wrap gap-1.5">
+                  <div className="badge-group">
+                    <span className="badge-label">What They Care About</span>
+                    <div className="driver-tags">
                       {contact.key_drivers.map((driver, idx) => (
-                        <span key={idx} className="text-xs px-2.5 py-1 rounded-md bg-slate-900 border border-slate-800 text-slate-300">
+                        <span key={idx} className="tag-driver">
                           {driver}
                         </span>
                       ))}
@@ -573,12 +574,12 @@ export default function App() {
 
                   {/* Objections */}
                   {contact.objections.length > 0 && (
-                    <div>
-                      <span className="text-[10px] font-bold tracking-wider uppercase text-slate-400 block mb-1.5">Current Objections</span>
-                      <div className="space-y-1.5">
+                    <div className="badge-group">
+                      <span className="badge-label">Current Objections</span>
+                      <div className="objections-list">
                         {contact.objections.map((obj, idx) => (
-                          <div key={idx} className="flex items-start gap-2 text-xs px-3 py-2 rounded-lg border border-red-500/20 bg-red-950/10 text-red-400">
-                            <AlertTriangle className="h-3.5 w-3.5 shrink-0 mt-0.5" />
+                          <div key={idx} className="objection-item">
+                            <AlertTriangle className="objection-icon" />
                             <span>{obj}</span>
                           </div>
                         ))}
@@ -588,104 +589,99 @@ export default function App() {
                 </div>
 
                 {/* SECTION 5: AI Memory Card */}
-                <div className="glass-panel p-6 space-y-4 border-sky-500/10 relative overflow-hidden">
-                  <div className="absolute top-0 right-0 p-3 opacity-10">
-                    <Sparkles className="h-16 w-16 text-sky-400" />
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <Sparkles className="h-4.5 w-4.5 text-sky-400" />
-                    <h3 className="font-bold text-sky-400 text-sm tracking-wide uppercase">AI Thesis & Next Action</h3>
+                <div className="glass-panel" style={{ borderLeft: '3px solid var(--accent-cyan)' }}>
+                  <div className="section-title-container" style={{ marginBottom: '1rem' }}>
+                    <Sparkles className="section-icon cyan" />
+                    <h3 className="section-title" style={{ color: 'var(--accent-cyan)' }}>AI Thesis & Next Action</h3>
                   </div>
 
-                  <div className="space-y-3.5">
-                    <div>
-                      <span className="text-[10px] font-bold tracking-wider uppercase text-slate-400 block mb-1">Relationship Thesis</span>
-                      <p className="text-xs text-slate-300 leading-relaxed font-medium">{contact.thesis}</p>
-                    </div>
+                  <div className="memory-detail-item">
+                    <span className="badge-label">Relationship Thesis</span>
+                    <p className="memory-detail-content">{contact.thesis}</p>
+                  </div>
 
-                    <div>
-                      <span className="text-[10px] font-bold tracking-wider uppercase text-slate-400 block mb-1">Current Status</span>
-                      <p className="text-xs text-slate-300 leading-relaxed font-medium">{contact.current_status}</p>
-                    </div>
+                  <div className="memory-detail-item">
+                    <span className="badge-label">Current Status</span>
+                    <p className="memory-detail-content">{contact.current_status}</p>
+                  </div>
 
-                    <div className="pt-2 border-t border-slate-800/60">
-                      <span className="text-[10px] font-bold tracking-wider uppercase text-sky-400 block mb-1">Recommended Next Action</span>
-                      <p className="text-xs text-sky-300 leading-relaxed font-semibold">{contact.recommended_next_action}</p>
-                    </div>
+                  <div className="next-action-card">
+                    <span className="badge-label" style={{ color: 'var(--accent-cyan)' }}>Recommended Next Action</span>
+                    <p className="next-action-text">{contact.recommended_next_action}</p>
                   </div>
                 </div>
 
               </div>
 
               {/* RIGHT COLUMN: Open Loops, Moments, Timeline */}
-              <div className="space-y-6 lg:col-span-2">
+              <div className="column-right">
                 
                 {/* SECTION 3: Open Loops (Commitments) */}
-                <div className="glass-panel p-6">
-                  <div className="flex items-center justify-between mb-4">
-                    <div className="flex items-center gap-2">
-                      <CheckSquare className="h-5 w-5 text-indigo-400" />
-                      <h3 className="font-bold text-slate-200">Open Loops</h3>
+                <div className="glass-panel">
+                  <div className="section-title-container" style={{ justifyContent: 'space-between', alignItems: 'center' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                      <CheckSquare className="section-icon indigo" />
+                      <h3 className="section-title">Open Loops</h3>
                     </div>
-                    <span className="text-[10px] font-bold text-slate-400 bg-slate-900 border border-slate-800 px-2 py-0.5 rounded">
+                    <span style={{ fontSize: '0.65rem', fontWeight: 'bold', color: 'var(--text-secondary)', background: 'rgba(255,255,255,0.03)', border: '1px solid var(--border-color)', padding: '0.15rem 0.4rem', borderRadius: '4px' }}>
                       {commitments.filter(c => c.status === 'open').length} Unresolved
                     </span>
                   </div>
 
                   {commitments.length === 0 ? (
-                    <div className="text-center py-6 text-slate-400 text-xs">No commitments detected for this contact.</div>
+                    <div style={{ textAlign: 'center', padding: '2rem 0', color: 'var(--text-muted)', fontSize: '0.8rem' }}>No commitments detected for this contact.</div>
                   ) : (
-                    <div className="space-y-3">
+                    <div className="commitments-list">
                       {commitments.map((comm) => (
                         <div 
                           key={comm.id} 
-                          className={`p-4 rounded-xl border transition-all ${comm.status !== 'open' ? 'opacity-40 bg-slate-950/20 border-slate-900' : 'bg-slate-900/30 border-slate-800/80'}`}
+                          className={`commitment-card ${comm.status !== 'open' ? 'inactive' : ''}`}
                         >
-                          <div className="flex items-start justify-between gap-4">
-                            <div className="space-y-1">
-                              <p className={`text-sm font-semibold ${comm.status === 'completed' ? 'line-through text-slate-500' : 'text-slate-200'}`}>
+                          <div className="commitment-header">
+                            <div style={{ flex: 1 }}>
+                              <p className={`commitment-desc ${comm.status === 'completed' ? 'completed' : ''}`}>
                                 {comm.description}
                               </p>
                               
-                              <div className="flex flex-wrap items-center gap-3 text-xs text-slate-400 pt-1">
-                                <span className={`inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold uppercase ${comm.owner === 'founder' ? 'bg-amber-950/20 border border-amber-500/20 text-amber-400' : 'bg-blue-950/20 border border-blue-500/20 text-blue-400'}`}>
+                              <div className="commitment-meta">
+                                <span className={`owner-pill ${comm.owner}`}>
                                   {comm.owner}
                                 </span>
                                 {comm.due_date && (
-                                  <span className="flex items-center gap-1">
-                                    <Calendar className="h-3.5 w-3.5" />
+                                  <span className="meta-item">
+                                    <Calendar className="meta-icon" />
                                     Due {comm.due_date}
                                   </span>
                                 )}
-                                <span className="flex items-center gap-1 font-mono">
-                                  <TrendingUp className="h-3.5 w-3.5" />
+                                <span className="meta-item">
+                                  <TrendingUp className="meta-icon" />
                                   {comm.confidence}% confidence
                                 </span>
                               </div>
                             </div>
 
                             {comm.status === 'open' && (
-                              <div className="flex gap-2">
+                              <div className="commitment-actions">
                                 <button 
                                   onClick={() => handleUpdateCommitmentStatus(comm.id, 'completed')}
-                                  className="p-1.5 rounded-lg border border-emerald-500/30 hover:bg-emerald-950/20 text-emerald-400 transition-all"
+                                  className="action-btn complete"
                                   title="Mark as Complete"
                                 >
-                                  <CheckCircle className="h-4 w-4" />
+                                  <CheckCircle style={{ width: '13px', height: '13px' }} />
                                 </button>
                                 <button 
                                   onClick={() => handleUpdateCommitmentStatus(comm.id, 'dismissed')}
-                                  className="p-1.5 rounded-lg border border-red-500/30 hover:bg-red-950/20 text-red-400 transition-all"
+                                  className="action-btn dismiss"
                                   title="Dismiss Loop"
                                 >
-                                  <Trash2 className="h-4 w-4" />
+                                  <Trash2 style={{ width: '13px', height: '13px' }} />
                                 </button>
                               </div>
                             )}
                           </div>
 
                           {/* Evidence Quote */}
-                          <div className="mt-3 pl-3 border-l-2 border-indigo-500/30 text-xs italic text-slate-400 leading-relaxed">
+                          <div className="evidence-quote">
                             "{comm.evidence_quote}"
                           </div>
                         </div>
@@ -695,46 +691,46 @@ export default function App() {
                 </div>
 
                 {/* SECTION 2: Key Moments (Milestones) */}
-                <div className="glass-panel p-6">
-                  <div className="flex items-center gap-2 mb-4">
-                    <Sparkles className="h-5 w-5 text-sky-400" />
-                    <h3 className="font-bold text-slate-200">Key Moments</h3>
+                <div className="glass-panel">
+                  <div className="section-title-container">
+                    <Sparkles className="section-icon blue" />
+                    <h3 className="section-title">Key Moments</h3>
                   </div>
 
                   {milestones.length === 0 ? (
-                    <div className="text-center py-6 text-slate-400 text-xs">No milestones extracted yet. Log an interaction to generate moments.</div>
+                    <div style={{ textAlign: 'center', padding: '2rem 0', color: 'var(--text-muted)', fontSize: '0.8rem' }}>No milestones extracted yet. Log an interaction to generate moments.</div>
                   ) : (
-                    <div className="space-y-3">
+                    <div>
                       {milestones.map((mile) => (
-                        <div key={mile.id} className="p-4 rounded-xl border border-slate-800/80 bg-slate-900/30">
-                          <div className="flex items-center justify-between gap-4">
-                            <span className="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold uppercase bg-sky-950/20 border border-sky-500/20 text-sky-400">
+                        <div key={mile.id} className="moment-card">
+                          <div className="moment-header">
+                            <span className="moment-type">
                               {mile.milestone_type.replace(/_/g, ' ')}
                             </span>
-                            <div className="flex items-center gap-2">
-                              <span className="text-xs text-slate-400">{mile.date}</span>
-                              <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-slate-800 border border-slate-700 text-slate-300">
+                            <div className="moment-meta">
+                              <span>{mile.date}</span>
+                              <span className="moment-importance">
                                 Importance {mile.importance_score}
                               </span>
                             </div>
                           </div>
 
-                          <p className="text-sm font-semibold text-slate-200 mt-2">
+                          <p className="moment-summary">
                             {mile.summary}
                           </p>
 
                           {/* Evidence drawer toggle */}
-                          <div className="mt-3">
+                          <div>
                             <button 
                               onClick={() => setExpandedMoment(expandedMoment === mile.id ? null : mile.id)}
-                              className="text-xs text-sky-400 hover:text-sky-300 font-semibold flex items-center gap-1 transition-all"
+                              className="drawer-toggle"
                             >
                               {expandedMoment === mile.id ? 'Hide Evidence' : 'Show Evidence Quote'}
-                              {expandedMoment === mile.id ? <ChevronUp className="h-3.5 w-3.5" /> : <ChevronDown className="h-3.5 w-3.5" />}
+                              {expandedMoment === mile.id ? <ChevronUp style={{ width: '11px', height: '11px' }} /> : <ChevronDown style={{ width: '11px', height: '11px' }} />}
                             </button>
                             
                             {expandedMoment === mile.id && (
-                              <div className="mt-2 p-3 bg-slate-950/60 rounded-lg border border-slate-800/60 text-xs italic text-slate-400 leading-relaxed animate-fadeIn">
+                              <div className="drawer-content">
                                 "{mile.evidence_quote}"
                               </div>
                             )}
@@ -746,45 +742,44 @@ export default function App() {
                 </div>
 
                 {/* SECTION 4: Timeline (Interactions) */}
-                <div className="glass-panel p-6">
-                  <div className="flex items-center gap-2 mb-6">
-                    <Layers className="h-5 w-5 text-indigo-400" />
-                    <h3 className="font-bold text-slate-200">Raw Interaction Logs</h3>
+                <div className="glass-panel">
+                  <div className="section-title-container">
+                    <Layers className="section-icon indigo" />
+                    <h3 className="section-title">Raw Interaction Logs</h3>
                   </div>
 
-                  <div className="relative pl-6 space-y-6">
+                  <div className="timeline-wrapper">
                     <div className="timeline-line"></div>
                     
                     {interactions.map((int) => (
-                      <div key={int.id} className="relative space-y-2">
+                      <div key={int.id} className="timeline-node">
                         {/* Bullet */}
-                        <div className="absolute -left-[30px] top-1.5 h-4 w-4 rounded-full bg-slate-950 border-2 border-indigo-400 flex items-center justify-center">
-                          <div className="h-1.5 w-1.5 rounded-full bg-sky-400"></div>
+                        <div className="timeline-bullet">
+                          <div className="timeline-bullet-inner"></div>
                         </div>
 
-                        <div className="flex items-center justify-between text-xs">
-                          <span className="font-bold uppercase text-slate-400 flex items-center gap-1.5">
-                            <MessageSquare className="h-3.5 w-3.5 text-indigo-400" />
+                        <div className="timeline-node-header">
+                          <span className="timeline-node-type">
                             {int.interaction_type}
                           </span>
-                          <span className="text-slate-400 font-medium">{new Date(int.date).toLocaleDateString()}</span>
+                          <span className="timeline-node-date">{new Date(int.date).toLocaleDateString()}</span>
                         </div>
 
-                        <div className="border border-slate-800/60 bg-slate-900/20 rounded-xl p-4">
+                        <div className="timeline-node-content">
                           <button 
                             onClick={() => setExpandedTimeline(expandedTimeline === int.id ? null : int.id)}
-                            className="w-full text-left flex justify-between items-center text-sm font-semibold text-slate-200"
+                            className="timeline-node-title"
                           >
-                            <span className="truncate pr-4">
+                            <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: '85%' }}>
                               {int.content.split('\n')[0]}
                             </span>
-                            <span className="text-xs text-sky-400 hover:text-sky-300 font-medium">
+                            <span style={{ fontSize: '0.7rem', color: 'var(--accent-cyan)', fontWeight: 'bold' }}>
                               {expandedTimeline === int.id ? 'Collapse' : 'Expand'}
                             </span>
                           </button>
 
                           {expandedTimeline === int.id && (
-                            <div className="mt-3 pt-3 border-t border-slate-800/60 text-xs text-slate-400 font-mono whitespace-pre-wrap leading-relaxed animate-fadeIn">
+                            <div className="timeline-body">
                               {int.content}
                             </div>
                           )}
@@ -795,13 +790,13 @@ export default function App() {
                 </div>
 
               </div>
-            </div>
+            </>
           )}
         </main>
       )}
       
       {/* Footer */}
-      <footer className="mt-auto py-6 text-center border-t border-slate-900 text-xs text-slate-500 font-medium">
+      <footer className="footer">
         MemoryCRM Pod Console © 2026. Built with Lemma Platform.
       </footer>
     </div>
