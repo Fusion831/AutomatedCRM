@@ -1,6 +1,6 @@
 {
   "name": "ingest-interaction-workflow",
-  "description": "Triggered by new interaction inserts. Prepares contact context, invokes the consolidated-extractor, saves updates, and reconciles open commitments.",
+  "description": "Triggered by new interaction inserts. Prepares contact context, invokes the consolidated-extractor, reconciles commitments, and saves updates.",
   "visibility": "private",
   "mode": "system",
   "start": {
@@ -48,6 +48,24 @@
       }
     },
     {
+      "id": "reconciliation",
+      "type": "FUNCTION",
+      "label": "Reconcile Commitments",
+      "config": {
+        "function_name": "reconcile_commitments_function",
+        "input_mapping": {
+          "reconciliations": {
+            "type": "expression",
+            "value": "extractor.output.reconciliations"
+          },
+          "new_interaction_content": {
+            "type": "expression",
+            "value": "fetch_context.output.new_interaction.content"
+          }
+        }
+      }
+    },
+    {
       "id": "apply_updates",
       "type": "FUNCTION",
       "label": "Apply Memory & Commitment Updates",
@@ -65,6 +83,10 @@
           "extraction_result": {
             "type": "expression",
             "value": "extractor.output"
+          },
+          "reconciliation_result": {
+            "type": "expression",
+            "value": "reconciliation.output"
           }
         }
       }
@@ -84,6 +106,11 @@
     {
       "id": "edge_3",
       "source_node_id": "extractor",
+      "target_node_id": "reconciliation"
+    },
+    {
+      "id": "edge_4",
+      "source_node_id": "reconciliation",
       "target_node_id": "apply_updates"
     }
   ]

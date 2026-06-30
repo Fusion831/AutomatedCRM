@@ -1,0 +1,16 @@
+{
+  "name": "reconcile_commitments_function",
+  "description": "Verifies proposed commitment resolutions from the extractor against current datastore state, filtering and auditing outcomes.",
+  "type": "API",
+  "visibility": "POD",
+  "code": { "$file": "code.py" },
+  "permissions": {
+    "grants": [
+      {
+        "resource_type": "datastore_table",
+        "resource_name": "commitments",
+        "permission_ids": ["datastore.table.read", "datastore.record.read"]
+      }
+    ]
+  }
+}

@@ -35,10 +35,28 @@ class ExtractedData(BaseModel):
     commitments: List[CommitmentItem] = []
     reconciliations: List[ReconciliationItem] = []
 
+class AcceptedReconciliation(BaseModel):
+    commitment_id: str
+    reason: str
+    evidence_quote: str
+    reconciliation_timestamp: str
+
+class RejectedReconciliation(BaseModel):
+    commitment_id: str
+    reason: str
+    evidence_quote: str
+    rejection_reason: str
+
+class ReconciliationResult(BaseModel):
+    accepted: List[AcceptedReconciliation] = []
+    rejected: List[RejectedReconciliation] = []
+    audit_entries: List[str] = []
+
 class ApplyUpdatesInput(BaseModel):
     contact_id: str
     interaction_id: str
     extraction_result: ExtractedData
+    reconciliation_result: ReconciliationResult
 
 class ApplyUpdatesOutput(BaseModel):
     status: str
@@ -235,18 +253,21 @@ async def apply_updates_function(ctx: FunctionContext, data: ApplyUpdatesInput) 
             "created_at": datetime.utcnow().isoformat() + "Z"
         })
         
-    # 4. Reconcile open commitments
-    for recon in ext.reconciliations:
+    # 4. Reconcile open commitments (only accepted ones)
+    for recon in data.reconciliation_result.accepted:
         try:
             pod.table("commitments").update(recon.commitment_id, {
                 "status": "completed",
-                "completed_at": datetime.utcnow().isoformat() + "Z",
+                "completed_at": recon.reconciliation_timestamp,
                 "reconciliation_reason": recon.reason,
                 "reconciliation_evidence": recon.evidence_quote
             })
         except Exception:
             # Skip if record doesn't exist
             pass
+            
+    for rej in data.reconciliation_result.rejected:
+        print(f"Audit Log: Rejected reconciliation for commitment {rej.commitment_id}. Reason: {rej.rejection_reason}")
             
     # 5. Calculate Priority
     # Get all current commitments to pass to priority calculator

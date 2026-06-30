@@ -1,6 +1,6 @@
 {
   "name": "fetch_context_function",
-  "description": "Prepares contacts and open commitments context for the consolidated extractor.",
+  "description": "Prepares contacts, milestones, state history, and open commitments context for the consolidated extractor.",
   "type": "API",
   "visibility": "POD",
   "code": { "$file": "code.py" },
@@ -14,6 +14,21 @@
       {
         "resource_type": "datastore_table",
         "resource_name": "commitments",
+        "permission_ids": ["datastore.table.read", "datastore.record.read"]
+      },
+      {
+        "resource_type": "datastore_table",
+        "resource_name": "relationship_milestones",
+        "permission_ids": ["datastore.table.read", "datastore.record.read"]
+      },
+      {
+        "resource_type": "datastore_table",
+        "resource_name": "relationship_state_history",
+        "permission_ids": ["datastore.table.read", "datastore.record.read"]
+      },
+      {
+        "resource_type": "datastore_table",
+        "resource_name": "interactions",
         "permission_ids": ["datastore.table.read", "datastore.record.read"]
       }
     ]
