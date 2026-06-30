@@ -1,0 +1,296 @@
+[
+  {
+    "id": "scenario_1_meeting",
+    "description": "Founder-VC introductory meeting transcript with multiple drivers, milestones, and commitments.",
+    "input": {
+      "contact_memory": {
+        "name": "Sarah Jenkins",
+        "company": "NextGen AI",
+        "who_are_they": "Founder and CEO of NextGen AI.",
+        "why_talking": "Looking to raise a Seed round.",
+        "key_drivers": ["funding"],
+        "objections": []
+      },
+      "open_commitments": [
+        {
+          "id": "comm_seed_deck",
+          "description": "Send Seed pitch deck",
+          "owner": "founder",
+          "status": "open"
+        }
+      ],
+      "new_interaction": {
+        "interaction_type": "meeting",
+        "content": "Founder: Thanks for the time, Sarah. We loved your background. Did you get the pitch deck I emailed yesterday?\nSarah Jenkins: Yes, I received the pitch deck. I went through it, and the architecture diagram was very clean. However, my main concern is customer acquisition cost (CAC). How do you plan to scale it down?\nFounder: We are shifting to a product-led growth model. I'll send you our detailed financial model and CAC projections by Friday.\nSarah Jenkins: Excellent, send that over. Let's schedule a follow-up demo for next week. I will review the financial model as soon as I get it."
+      }
+    },
+    "expected_output": {
+      "memory_updates": {
+        "new_identity_facts": [
+          "Sarah Jenkins reviewed the pitch deck and liked the architecture diagram."
+        ],
+        "new_drivers": [
+          "Product-led growth model migration"
+        ],
+        "new_objections": [
+          "Customer acquisition cost (CAC) scaling concern"
+        ],
+        "memory_confidence": {
+          "new_identity_facts": 0.95,
+          "new_drivers": 0.9,
+          "new_objections": 0.95
+        }
+      },
+      "milestones": [
+        {
+          "summary": "Sarah Jenkins confirmed receipt of the Seed pitch deck",
+          "milestone_type": "deck_received",
+          "importance_score": 50,
+          "evidence_quote": "Yes, I received the pitch deck."
+        }
+      ],
+      "commitments": [
+        {
+          "owner": "founder",
+          "description": "Send detailed financial model and CAC projections by Friday",
+          "confidence": 95,
+          "due_date": null,
+          "evidence_quote": "I'll send you our detailed financial model and CAC projections by Friday."
+        },
+        {
+          "owner": "contact",
+          "description": "Review the financial model upon receipt",
+          "confidence": 90,
+          "due_date": null,
+          "evidence_quote": "I will review the financial model as soon as I get it."
+        }
+      ],
+      "reconciliations": [
+        {
+          "commitment_id": "comm_seed_deck",
+          "reason": "Pitch deck confirmed received and reviewed by the contact.",
+          "evidence_quote": "Yes, I received the pitch deck."
+        }
+      ]
+    }
+  },
+  {
+    "id": "scenario_2_email",
+    "description": "Email thread resolving a technical doc request and scheduling a technical deep-dive.",
+    "input": {
+      "contact_memory": {
+        "name": "Amit Patel",
+        "company": "CloudShield",
+        "who_are_they": "CTO of CloudShield.",
+        "why_talking": "Interested in our database proxy solution.",
+        "key_drivers": ["database security", "latency"],
+        "objections": ["latency overhead"]
+      },
+      "open_commitments": [
+        {
+          "id": "comm_tech_doc",
+          "description": "Send technical architecture document for proxy latency overhead",
+          "owner": "founder",
+          "status": "open"
+        }
+      ],
+      "new_interaction": {
+        "interaction_type": "email",
+        "content": "From: founder@memorycrm.com\nTo: amit@cloudshield.com\nSubject: Latency breakdown doc\n\nAmit, following up on our call, here is the latency breakdown document attached.\n\nFrom: amit@cloudshield.com\nTo: founder@memorycrm.com\n\nThanks for sending the document. The latency overhead seems acceptable (under 2ms). Let's do a technical deep dive. I'll ask my lead architect, Divya, to join us. I will set up a Zoom invite for next Tuesday."
+      }
+    },
+    "expected_output": {
+      "memory_updates": {
+        "new_identity_facts": [
+          "Amit Patel reviewed the latency document and found the overhead (< 2ms) acceptable.",
+          "Divya is the lead architect at CloudShield."
+        ],
+        "new_drivers": [],
+        "new_objections": [],
+        "memory_confidence": {
+          "new_identity_facts": 0.95
+        }
+      },
+      "milestones": [
+        {
+          "summary": "Technical document received and latency concerns resolved",
+          "milestone_type": "technical_validation",
+          "importance_score": 75,
+          "evidence_quote": "Thanks for sending the document. The latency overhead seems acceptable (under 2ms)."
+        }
+      ],
+      "commitments": [
+        {
+          "owner": "contact",
+          "description": "Set up a Zoom invite for a technical deep dive next Tuesday",
+          "confidence": 95,
+          "due_date": null,
+          "evidence_quote": "I will set up a Zoom invite for next Tuesday."
+        }
+      ],
+      "reconciliations": [
+        {
+          "commitment_id": "comm_tech_doc",
+          "reason": "Technical doc successfully sent and reviewed.",
+          "evidence_quote": "Thanks for sending the document."
+        }
+      ]
+    }
+  },
+  {
+    "id": "scenario_3_slack",
+    "description": "Slack interaction with casual objections and minor action items.",
+    "input": {
+      "contact_memory": {
+        "name": "Marcus Aurelius",
+        "company": "Rome Ventures",
+        "who_are_they": "Partner at Rome Ventures.",
+        "why_talking": "Potential investor in Series A.",
+        "key_drivers": ["market size", "defensibility"],
+        "objections": []
+      },
+      "open_commitments": [],
+      "new_interaction": {
+        "interaction_type": "slack",
+        "content": "[10:15 AM] Founder: Hey Marcus, just wanted to check if you had any thoughts on our roadmap?\n[10:20 AM] Marcus: Looks solid, but I have doubts about the GTM speed. Are you hiring a Head of Sales soon?\n[10:22 AM] Founder: Yes, looking to hire in Q3. I'll share the job description with you once it's ready.\n[10:25 AM] Marcus: Great, send it over and I can share it with a few candidates."
+      }
+    },
+    "expected_output": {
+      "memory_updates": {
+        "new_identity_facts": [
+          "Marcus Aurelius has doubts about GTM speed.",
+          "Company planning to hire a Head of Sales in Q3."
+        ],
+        "new_drivers": [],
+        "new_objections": [
+          "Go-to-market (GTM) execution speed concerns"
+        ],
+        "memory_confidence": {
+          "new_identity_facts": 0.9,
+          "new_objections": 0.95
+        }
+      },
+      "milestones": [],
+      "commitments": [
+        {
+          "owner": "founder",
+          "description": "Share Head of Sales job description once ready",
+          "confidence": 90,
+          "due_date": null,
+          "evidence_quote": "I'll share the job description with you once it's ready."
+        },
+        {
+          "owner": "contact",
+          "description": "Share Head of Sales job description with candidates",
+          "confidence": 85,
+          "due_date": null,
+          "evidence_quote": "send it over and I can share it with a few candidates"
+        }
+      ],
+      "reconciliations": []
+    }
+  },
+  {
+    "id": "scenario_4_call",
+    "description": "Sales call transcript containing a security objection and demo milestone.",
+    "input": {
+      "contact_memory": {
+        "name": "Elena Rostova",
+        "company": "SecureAuth",
+        "who_are_they": "Director of Security at SecureAuth.",
+        "why_talking": "Evaluating enterprise sign-on integrations.",
+        "key_drivers": ["SOC2 compliance"],
+        "objections": []
+      },
+      "open_commitments": [],
+      "new_interaction": {
+        "interaction_type": "meeting",
+        "content": "Elena: The demo was great. I'm impressed by the speed. But do you store raw tokens? We require SAML metadata to be encrypted at rest.\nFounder: We encrypt everything at rest using AES-256. I'll have our security team email you our SOC2 Type II report.\nElena: Perfect. I will introduce you to our VP of Infrastructure, Kevin, to discuss setup."
+      }
+    },
+    "expected_output": {
+      "memory_updates": {
+        "new_identity_facts": [
+          "Elena Rostova was impressed by the demo speed.",
+          "SecureAuth requires SAML metadata to be encrypted at rest.",
+          "Kevin is the VP of Infrastructure at SecureAuth."
+        ],
+        "new_drivers": [
+          "AES-256 rest encryption compliance"
+        ],
+        "new_objections": [
+          "SAML metadata raw token storage concerns"
+        ],
+        "memory_confidence": {
+          "new_identity_facts": 0.95,
+          "new_drivers": 0.9,
+          "new_objections": 0.95
+        }
+      },
+      "milestones": [
+        {
+          "summary": "Elena Rostova completed the product demonstration",
+          "milestone_type": "demo_completed",
+          "importance_score": 70,
+          "evidence_quote": "The demo was great. I'm impressed by the speed."
+        }
+      ],
+      "commitments": [
+        {
+          "owner": "founder",
+          "description": "Have security team email SOC2 Type II report",
+          "confidence": 95,
+          "due_date": null,
+          "evidence_quote": "I'll have our security team email you our SOC2 Type II report."
+        },
+        {
+          "owner": "contact",
+          "description": "Introduce founder to VP of Infrastructure, Kevin",
+          "confidence": 90,
+          "due_date": null,
+          "evidence_quote": "I will introduce you to our VP of Infrastructure, Kevin, to discuss setup."
+        }
+      ],
+      "reconciliations": []
+    }
+  },
+  {
+    "id": "scenario_5_note",
+    "description": "Casual catch-up handwritten note without explicit milestones or commitments.",
+    "input": {
+      "contact_memory": {
+        "name": "Tom Henderson",
+        "company": "Cascade Ventures",
+        "who_are_they": "Investment Associate at Cascade Ventures.",
+        "why_talking": "Building relationship for future rounds.",
+        "key_drivers": [],
+        "objections": []
+      },
+      "open_commitments": [],
+      "new_interaction": {
+        "interaction_type": "note",
+        "content": "Met Tom for coffee at Blue Bottle. He mentioned he recently moved from NY to SF and is focusing on developer tooling and database infrastructure investments. No immediate deals on his plate, but wants to stay in touch."
+      }
+    },
+    "expected_output": {
+      "memory_updates": {
+        "new_identity_facts": [
+          "Tom Henderson recently moved from NY to SF.",
+          "Tom is focusing on developer tooling and database infrastructure investments."
+        ],
+        "new_drivers": [
+          "Developer tooling investments",
+          "Database infrastructure investments"
+        ],
+        "new_objections": [],
+        "memory_confidence": {
+          "new_identity_facts": 0.95,
+          "new_drivers": 0.95
+        }
+      },
+      "milestones": [],
+      "commitments": [],
+      "reconciliations": []
+    }
+  }
+]
