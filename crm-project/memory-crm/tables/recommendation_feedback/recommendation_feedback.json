@@ -1,0 +1,47 @@
+{
+  "name": "recommendation_feedback",
+  "primary_key_column": "id",
+  "enable_rls": false,
+  "visibility": "POD",
+  "columns": [
+    {
+      "name": "recommendation_id",
+      "type": "UUID",
+      "required": true,
+      "foreign_key": {
+        "references": "recommendation_history.id"
+      }
+    },
+    {
+      "name": "contact_id",
+      "type": "UUID",
+      "required": true,
+      "foreign_key": {
+        "references": "contacts.id"
+      }
+    },
+    {
+      "name": "feedback_action",
+      "type": "ENUM",
+      "required": true,
+      "options": [
+        "ACCEPTED",
+        "REJECTED",
+        "COMPLETED",
+        "EXPIRED",
+        "IGNORED"
+      ]
+    },
+    {
+      "name": "feedback_reason",
+      "type": "TEXT",
+      "required": false
+    },
+    {
+      "name": "created_at",
+      "type": "DATETIME",
+      "required": true
+    }
+  ],
+  "config": {}
+}
