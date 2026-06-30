@@ -1,0 +1,100 @@
+{
+  "name": "resurrection-agent",
+  "description": "Synthesizes memory, commitments, state history, and interactions to reconstruct a high-fidelity relationship resurrection snapshot.",
+  "visibility": "private",
+  "instruction": {
+    "$file": "instruction.md"
+  },
+  "agent_runtime": {
+    "profile_id": "default",
+    "model_name": "gemini-flash-lite-latest"
+  },
+  "input_schema": {
+    "type": "object",
+    "properties": {
+      "contact": {
+        "type": "object",
+        "properties": {
+          "name": { "type": "string" },
+          "company": { "type": "string" },
+          "who_are_they": { "type": "string" },
+          "why_talking": { "type": "string" },
+          "key_drivers": { "type": "array", "items": { "type": "string" } },
+          "objections": { "type": "array", "items": { "type": "string" } }
+        },
+        "required": ["name"]
+      },
+      "relationship_state": { "type": "string" },
+      "priority_score": { "type": "integer" },
+      "priority_reasons": { "type": "array", "items": { "type": "object" } },
+      "open_commitments": { "type": "array", "items": { "type": "object" } },
+      "milestones": { "type": "array", "items": { "type": "object" } },
+      "recent_interactions": { "type": "array", "items": { "type": "object" } },
+      "recommendation": {
+        "type": "object",
+        "properties": {
+          "action": { "type": "string" },
+          "category": { "type": "string" },
+          "urgency": { "type": "string" },
+          "reasoning": { "type": "array", "items": { "type": "string" } },
+          "evidence": { "type": "array", "items": { "type": "string" } }
+        }
+      }
+    },
+    "required": ["contact", "relationship_state", "open_commitments", "milestones", "recent_interactions"]
+  },
+  "output_schema": {
+    "type": "object",
+    "properties": {
+      "relationship_summary": { "type": "string" },
+      "relationship_thesis": { "type": "string" },
+      "key_moments": {
+        "type": "array",
+        "items": {
+          "type": "object",
+          "properties": {
+            "summary": { "type": "string" },
+            "importance_score": { "type": "integer" },
+            "evidence": { "type": "string" }
+          },
+          "required": ["summary", "importance_score", "evidence"]
+        }
+      },
+      "current_blockers": { "type": "array", "items": { "type": "string" } },
+      "open_loops": {
+        "type": "array",
+        "items": {
+          "type": "object",
+          "properties": {
+            "description": { "type": "string" },
+            "owner": { "type": "string" },
+            "evidence": { "type": "string" }
+          },
+          "required": ["description", "owner", "evidence"]
+        }
+      },
+      "why_momentum_stopped": { "type": "string" },
+      "recommended_reentry_strategy": { "type": "string" },
+      "evidence": { "type": "array", "items": { "type": "string" } }
+    },
+    "required": [
+      "relationship_summary",
+      "relationship_thesis",
+      "key_moments",
+      "current_blockers",
+      "open_loops",
+      "why_momentum_stopped",
+      "recommended_reentry_strategy",
+      "evidence"
+    ]
+  },
+  "permissions": {
+    "grants": [
+      {
+        "resource_type": "datastore_table",
+        "resource_name": "contacts",
+        "permission_ids": ["datastore.table.read", "datastore.record.read"]
+      }
+    ]
+  }
+}

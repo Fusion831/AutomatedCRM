@@ -1,0 +1,32 @@
+{
+  "name": "resurrection_snapshots",
+  "primary_key_column": "id",
+  "enable_rls": false,
+  "visibility": "POD",
+  "columns": [
+    {
+      "name": "contact_id",
+      "type": "UUID",
+      "required": true,
+      "foreign_key": {
+        "references": "contacts.id"
+      }
+    },
+    {
+      "name": "snapshot",
+      "type": "TEXT",
+      "required": true
+    },
+    {
+      "name": "confidence",
+      "type": "INTEGER",
+      "required": true
+    },
+    {
+      "name": "generated_at",
+      "type": "DATETIME",
+      "required": true
+    }
+  ],
+  "config": {}
+}

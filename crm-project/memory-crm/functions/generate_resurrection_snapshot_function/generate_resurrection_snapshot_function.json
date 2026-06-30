@@ -1,0 +1,36 @@
+{
+  "name": "generate_resurrection_snapshot_function",
+  "description": "Orchestrates Context Resurrection by checking the snapshot cache, calling the LLM resurrection-agent when stale, and computing a deterministic confidence score.",
+  "type": "API",
+  "visibility": "POD",
+  "code": { "$file": "code.py" },
+  "permissions": {
+    "grants": [
+      {
+        "resource_type": "datastore_table",
+        "resource_name": "contacts",
+        "permission_ids": ["datastore.table.read", "datastore.record.read"]
+      },
+      {
+        "resource_type": "datastore_table",
+        "resource_name": "commitments",
+        "permission_ids": ["datastore.table.read", "datastore.record.read"]
+      },
+      {
+        "resource_type": "datastore_table",
+        "resource_name": "interactions",
+        "permission_ids": ["datastore.table.read", "datastore.record.read"]
+      },
+      {
+        "resource_type": "datastore_table",
+        "resource_name": "relationship_milestones",
+        "permission_ids": ["datastore.table.read", "datastore.record.read"]
+      },
+      {
+        "resource_type": "datastore_table",
+        "resource_name": "resurrection_snapshots",
+        "permission_ids": ["datastore.table.read", "datastore.record.read", "datastore.record.write"]
+      }
+    ]
+  }
+}

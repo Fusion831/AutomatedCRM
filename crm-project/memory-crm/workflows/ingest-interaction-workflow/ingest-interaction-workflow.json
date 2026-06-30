@@ -1,6 +1,6 @@
 {
   "name": "ingest-interaction-workflow",
-  "description": "Triggered by new interaction inserts. Prepares contact context, invokes the consolidated-extractor, reconciles commitments, saves updates, evaluates relationship state, updates priority score, and generates action recommendations.",
+  "description": "Triggered by new interaction inserts. Prepares contact context, invokes the consolidated-extractor, reconciles commitments, saves updates, evaluates relationship state, updates priority score, generates recommendations, and rebuilds the context resurrection cache snapshot.",
   "visibility": "private",
   "mode": "system",
   "start": {
@@ -132,6 +132,20 @@
           }
         }
       }
+    },
+    {
+      "id": "resurrection_snapshot",
+      "type": "FUNCTION",
+      "label": "Generate Resurrection Snapshot Cache",
+      "config": {
+        "function_name": "generate_resurrection_snapshot_function",
+        "input_mapping": {
+          "contact_id": {
+            "type": "expression",
+            "value": "fetch_context.output.contact_id"
+          }
+        }
+      }
     }
   ],
   "edges": [
@@ -169,6 +183,11 @@
       "id": "edge_7",
       "source_node_id": "priority_engine",
       "target_node_id": "recommendation_engine"
+    },
+    {
+      "id": "edge_8",
+      "source_node_id": "recommendation_engine",
+      "target_node_id": "resurrection_snapshot"
     }
   ]
 }
