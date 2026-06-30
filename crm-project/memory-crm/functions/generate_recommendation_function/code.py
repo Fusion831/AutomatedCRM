@@ -291,6 +291,22 @@ async def generate_recommendation_function(ctx: FunctionContext, data: GenerateR
             "reason": f"Recalculated state {relationship_state} with priority reasons.",
             "created_at": datetime.utcnow().isoformat() + "Z"
         })
+        
+        # Record decision event
+        pod.table("decision_events").create({
+            "id": str(uuid.uuid4()),
+            "contact_id": contact_id,
+            "event_type": "RECOMMENDATION_CHANGE",
+            "event_source": "recommendation_engine",
+            "previous_value": f"{previous_category} ({previous_action})" if previous_category or previous_action else "None",
+            "new_value": f"{chosen['category']} ({chosen['action']})",
+            "reason": "; ".join(chosen["reasoning"]),
+            "evidence": json.dumps(chosen["evidence"]),
+            "metadata": json.dumps({
+                "urgency": chosen["urgency"]
+            }),
+            "created_at": datetime.utcnow().isoformat() + "Z"
+        })
         history_recorded = True
         
     return GenerateRecommendationResponse(

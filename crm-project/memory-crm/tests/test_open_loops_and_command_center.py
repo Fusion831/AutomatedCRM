@@ -49,7 +49,8 @@ class MockPod:
             "interactions": MockTable("interactions"),
             "open_loop_health": MockTable("open_loop_health"),
             "daily_briefs": MockTable("daily_briefs"),
-            "command_center_snapshots": MockTable("command_center_snapshots")
+            "command_center_snapshots": MockTable("command_center_snapshots"),
+            "decision_events": MockTable("decision_events")
         }
 
     def table(self, name: str) -> MockTable:

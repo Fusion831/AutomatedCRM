@@ -215,6 +215,22 @@ async def generate_resurrection_snapshot_function(ctx: FunctionContext, data: Ge
             "generated_at": generated_at_str
         })
         
+    # Record decision event
+    pod.table("decision_events").create({
+        "id": str(uuid.uuid4()),
+        "contact_id": contact_id,
+        "event_type": "RESURRECTION_GENERATED",
+        "event_source": "resurrection_agent",
+        "previous_value": "Stale Snapshot" if cache_records else "None",
+        "new_value": "Fresh Snapshot",
+        "reason": "New interaction ingested or manual refresh requested.",
+        "evidence": json.dumps([f"confidence_score={conf}"]),
+        "metadata": json.dumps({
+            "confidence": conf
+        }),
+        "created_at": datetime.utcnow().isoformat() + "Z"
+    })
+        
     return GenerateResurrectionSnapshotResponse(
         contact_id=contact_id,
         snapshot=ResurrectionSnapshot(**agent_res),

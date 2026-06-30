@@ -30,6 +30,11 @@
         "resource_type": "datastore_table",
         "resource_name": "relationship_state_history",
         "permission_ids": ["datastore.table.read", "datastore.record.read", "datastore.record.write"]
+      },
+      {
+        "resource_type": "datastore_table",
+        "resource_name": "decision_events",
+        "permission_ids": ["datastore.table.read", "datastore.record.read", "datastore.record.write"]
       }
     ]
   }

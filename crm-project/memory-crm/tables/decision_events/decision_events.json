@@ -1,0 +1,75 @@
+{
+  "name": "decision_events",
+  "primary_key_column": "id",
+  "enable_rls": false,
+  "visibility": "POD",
+  "columns": [
+    {
+      "name": "contact_id",
+      "type": "UUID",
+      "required": true,
+      "foreign_key": {
+        "references": "contacts.id"
+      }
+    },
+    {
+      "name": "event_type",
+      "type": "ENUM",
+      "required": true,
+      "options": [
+        "STATE_CHANGE",
+        "PRIORITY_CHANGE",
+        "RECOMMENDATION_CHANGE",
+        "COMMITMENT_RESOLVED",
+        "MEMORY_HEALTH_CHANGE",
+        "OPEN_LOOP_ESCALATION",
+        "RESURRECTION_GENERATED"
+      ]
+    },
+    {
+      "name": "event_source",
+      "type": "ENUM",
+      "required": true,
+      "options": [
+        "relationship_state_engine",
+        "priority_engine",
+        "recommendation_engine",
+        "reconciliation_engine",
+        "memory_health_engine",
+        "open_loop_engine",
+        "resurrection_agent"
+      ]
+    },
+    {
+      "name": "previous_value",
+      "type": "TEXT",
+      "required": false
+    },
+    {
+      "name": "new_value",
+      "type": "TEXT",
+      "required": true
+    },
+    {
+      "name": "reason",
+      "type": "TEXT",
+      "required": true
+    },
+    {
+      "name": "evidence",
+      "type": "TEXT",
+      "required": true
+    },
+    {
+      "name": "metadata",
+      "type": "TEXT",
+      "required": false
+    },
+    {
+      "name": "created_at",
+      "type": "DATETIME",
+      "required": true
+    }
+  ],
+  "config": {}
+}

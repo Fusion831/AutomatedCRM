@@ -48,7 +48,8 @@ class MockPod:
             "relationship_milestones": MockTable("relationship_milestones"),
             "commitments": MockTable("commitments"),
             "interactions": MockTable("interactions"),
-            "recommendation_history": MockTable("recommendation_history")
+            "recommendation_history": MockTable("recommendation_history"),
+            "decision_events": MockTable("decision_events")
         }
 
     def table(self, name: str) -> MockTable:

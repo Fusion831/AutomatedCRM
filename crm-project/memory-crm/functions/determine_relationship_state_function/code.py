@@ -211,6 +211,23 @@ async def determine_relationship_state_function(ctx: FunctionContext, data: Dete
                 "reason": reason_summary,
                 "changed_at": datetime.utcnow().isoformat() + "Z"
             })
+            
+            # Record decision event
+            pod.table("decision_events").create({
+                "id": str(uuid.uuid4()),
+                "contact_id": contact_id,
+                "event_type": "STATE_CHANGE",
+                "event_source": "relationship_state_engine",
+                "previous_value": previous_state,
+                "new_value": proposed_state,
+                "reason": reason_summary,
+                "evidence": json.dumps(reasons),
+                "metadata": json.dumps({
+                    "interactions_count": len(interactions),
+                    "open_commitments_count": len(open_commitments)
+                }),
+                "created_at": datetime.utcnow().isoformat() + "Z"
+            })
             transition_recorded = True
         else:
             # Keep original state

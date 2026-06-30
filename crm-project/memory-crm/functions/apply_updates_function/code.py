@@ -256,11 +256,30 @@ async def apply_updates_function(ctx: FunctionContext, data: ApplyUpdatesInput) 
     # 4. Reconcile open commitments (only accepted ones)
     for recon in data.reconciliation_result.accepted:
         try:
+            comm_item = pod.table("commitments").get(recon.commitment_id)
             pod.table("commitments").update(recon.commitment_id, {
                 "status": "completed",
                 "completed_at": recon.reconciliation_timestamp,
                 "reconciliation_reason": recon.reason,
                 "reconciliation_evidence": recon.evidence_quote
+            })
+            
+            # Record decision event
+            pod.table("decision_events").create({
+                "id": str(uuid.uuid4()),
+                "contact_id": contact_id,
+                "event_type": "COMMITMENT_RESOLVED",
+                "event_source": "reconciliation_engine",
+                "previous_value": "open",
+                "new_value": "completed",
+                "reason": recon.reason,
+                "evidence": json.dumps([recon.evidence_quote]),
+                "metadata": json.dumps({
+                    "commitment_id": recon.commitment_id,
+                    "description": comm_item.get("description") if comm_item else "",
+                    "owner": comm_item.get("owner") if comm_item else ""
+                }),
+                "created_at": datetime.utcnow().isoformat() + "Z"
             })
         except Exception:
             # Skip if record doesn't exist

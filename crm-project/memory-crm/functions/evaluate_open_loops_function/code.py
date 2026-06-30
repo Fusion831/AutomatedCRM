@@ -168,15 +168,17 @@ async def evaluate_open_loops_function(ctx: FunctionContext, data: EvaluateOpenL
         risk = max(0, min(100, risk))
         
         # 6. Save back to open_loop_health table
-        health_query = f"SELECT id FROM open_loop_health WHERE commitment_id = '{comm_id}'"
+        health_query = f"SELECT id, health FROM open_loop_health WHERE commitment_id = '{comm_id}'"
         health_res = pod.query(health_query)
         health_records = health_res.to_dict().get("items", [])
         
         updated_at_str = datetime.utcnow().isoformat() + "Z"
         effective_due_str = effective_due.isoformat()
+        prev_health = None
         
         if health_records:
             record_id = health_records[0]["id"]
+            prev_health = health_records[0].get("health")
             pod.table("open_loop_health").update(record_id, {
                 "health": health,
                 "risk_score": risk,
@@ -193,6 +195,25 @@ async def evaluate_open_loops_function(ctx: FunctionContext, data: EvaluateOpenL
                 "risk_reasons": json.dumps(reasons),
                 "effective_due_date": effective_due_str,
                 "updated_at": updated_at_str
+            })
+            
+        # Log when health status changes
+        if prev_health != health:
+            pod.table("decision_events").create({
+                "id": str(uuid.uuid4()),
+                "contact_id": contact_id,
+                "event_type": "OPEN_LOOP_ESCALATION" if health in ["OVERDUE", "ABANDONED", "AT_RISK"] else "MEMORY_HEALTH_CHANGE",
+                "event_source": "open_loop_engine",
+                "previous_value": str(prev_health),
+                "new_value": health,
+                "reason": f"Commitment health transitioned from {prev_health} to {health}",
+                "evidence": json.dumps(reasons),
+                "metadata": json.dumps({
+                    "commitment_id": comm_id,
+                    "risk_score": risk,
+                    "description": comm.get("description")
+                }),
+                "created_at": datetime.utcnow().isoformat() + "Z"
             })
             
         evaluated_list.append(EvaluatedCommitment(

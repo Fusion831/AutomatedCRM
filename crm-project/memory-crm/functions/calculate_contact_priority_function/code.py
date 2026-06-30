@@ -251,6 +251,24 @@ async def calculate_contact_priority_function(ctx: FunctionContext, data: Calcul
             "reasons": json.dumps(reasons_list_dict),
             "changed_at": datetime.utcnow().isoformat() + "Z"
         })
+        
+        # Record decision event
+        pod.table("decision_events").create({
+            "id": str(uuid.uuid4()),
+            "contact_id": contact_id,
+            "event_type": "PRIORITY_CHANGE",
+            "event_source": "priority_engine",
+            "previous_value": str(old_score),
+            "new_value": str(weighted_score),
+            "reason": f"Priority changed from {old_score} to {weighted_score} (Attention Level: {attention_level})",
+            "evidence": json.dumps([r.reason for r in reasons]),
+            "metadata": json.dumps({
+                "tier": tier,
+                "attention_level": attention_level,
+                "raw_score": raw_score
+            }),
+            "created_at": datetime.utcnow().isoformat() + "Z"
+        })
         history_recorded = True
         
     return CalculateContactPriorityResponse(
