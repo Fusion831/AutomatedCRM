@@ -1,0 +1,90 @@
+{
+  "name": "ingest-interaction-workflow",
+  "description": "Triggered by new interaction inserts. Prepares contact context, invokes the consolidated-extractor, saves updates, and reconciles open commitments.",
+  "visibility": "private",
+  "mode": "system",
+  "start": {
+    "type": "DATASTORE_EVENT",
+    "config": {
+      "table_name": "interactions",
+      "operations": ["INSERT"]
+    }
+  },
+  "nodes": [
+    {
+      "id": "fetch_context",
+      "type": "FUNCTION",
+      "label": "Fetch Contact Context",
+      "config": {
+        "function_name": "fetch_context_function",
+        "input_mapping": {
+          "interaction": {
+            "type": "expression",
+            "value": "start.payload"
+          }
+        }
+      }
+    },
+    {
+      "id": "extractor",
+      "type": "AGENT",
+      "label": "Consolidated Extractor Agent",
+      "config": {
+        "agent_name": "consolidated-extractor",
+        "input_mapping": {
+          "contact_memory": {
+            "type": "expression",
+            "value": "fetch_context.output.contact_memory"
+          },
+          "open_commitments": {
+            "type": "expression",
+            "value": "fetch_context.output.open_commitments"
+          },
+          "new_interaction": {
+            "type": "expression",
+            "value": "fetch_context.output.new_interaction"
+          }
+        }
+      }
+    },
+    {
+      "id": "apply_updates",
+      "type": "FUNCTION",
+      "label": "Apply Memory & Commitment Updates",
+      "config": {
+        "function_name": "apply_updates_function",
+        "input_mapping": {
+          "contact_id": {
+            "type": "expression",
+            "value": "fetch_context.output.contact_id"
+          },
+          "interaction_id": {
+            "type": "expression",
+            "value": "fetch_context.output.interaction_id"
+          },
+          "extraction_result": {
+            "type": "expression",
+            "value": "extractor.output"
+          }
+        }
+      }
+    }
+  ],
+  "edges": [
+    {
+      "id": "edge_1",
+      "source_node_id": "start",
+      "target_node_id": "fetch_context"
+    },
+    {
+      "id": "edge_2",
+      "source_node_id": "fetch_context",
+      "target_node_id": "extractor"
+    },
+    {
+      "id": "edge_3",
+      "source_node_id": "extractor",
+      "target_node_id": "apply_updates"
+    }
+  ]
+}

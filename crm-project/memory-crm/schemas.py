@@ -55,6 +55,7 @@ class Contact(BaseModel):
     tier: RelationshipTier = RelationshipTier.B
     who_are_they: Optional[str] = None
     why_talking: Optional[str] = None
+    key_drivers: Optional[dict] = None
     memory_confidence: Optional[dict[str, float]] = Field(
         default=None, 
         description="Confidence scores (0.0 to 1.0) for individual memory attributes"

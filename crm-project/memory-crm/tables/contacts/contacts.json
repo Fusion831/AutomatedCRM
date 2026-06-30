@@ -45,6 +45,11 @@
       "required": false
     },
     {
+      "name": "key_drivers",
+      "type": "JSON",
+      "required": false
+    },
+    {
       "name": "memory_confidence",
       "type": "JSON",
       "required": false

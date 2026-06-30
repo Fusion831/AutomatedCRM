@@ -1,0 +1,122 @@
+{
+  "name": "consolidated-extractor",
+  "description": "Agent that performs structured fact and milestone extraction, promise detection, and commitment reconciliation in a single LLM execution.",
+  "visibility": "private",
+  "instruction": {
+    "$file": "instruction.md"
+  },
+  "agent_runtime": {
+    "profile_id": "default",
+    "model_name": "gemini-flash-lite-latest"
+  },
+  "input_schema": {
+    "type": "object",
+    "properties": {
+      "contact_memory": {
+        "type": "object",
+        "properties": {
+          "name": { "type": "string" },
+          "who_are_they": { "type": "string" },
+          "why_talking": { "type": "string" },
+          "key_drivers": { "type": "array", "items": { "type": "string" } },
+          "objections": { "type": "array", "items": { "type": "string" } }
+        },
+        "required": ["name"]
+      },
+      "open_commitments": {
+        "type": "array",
+        "items": {
+          "type": "object",
+          "properties": {
+            "id": { "type": "string" },
+            "description": { "type": "string" },
+            "owner": { "type": "string" },
+            "status": { "type": "string" }
+          },
+          "required": ["id", "description", "owner", "status"]
+        }
+      },
+      "new_interaction": {
+        "type": "object",
+        "properties": {
+          "interaction_type": { "type": "string" },
+          "content": { "type": "string" }
+        },
+        "required": ["interaction_type", "content"]
+      }
+    },
+    "required": ["contact_memory", "new_interaction"]
+  },
+  "output_schema": {
+    "type": "object",
+    "properties": {
+      "memory_updates": {
+        "type": "object",
+        "properties": {
+          "new_identity_facts": { "type": "array", "items": { "type": "string" } },
+          "new_drivers": { "type": "array", "items": { "type": "string" } },
+          "new_objections": { "type": "array", "items": { "type": "string" } },
+          "memory_confidence": {
+            "type": "object",
+            "additionalProperties": { "type": "number" }
+          }
+        },
+        "required": ["new_identity_facts", "new_drivers", "new_objections", "memory_confidence"]
+      },
+      "milestones": {
+        "type": "array",
+        "items": {
+          "type": "object",
+          "properties": {
+            "summary": { "type": "string" },
+            "milestone_type": { "type": "string" },
+            "importance_score": { "type": "integer" },
+            "evidence_quote": { "type": "string" }
+          },
+          "required": ["summary", "milestone_type", "importance_score", "evidence_quote"]
+        }
+      },
+      "commitments": {
+        "type": "array",
+        "items": {
+          "type": "object",
+          "properties": {
+            "owner": { "type": "string" },
+            "description": { "type": "string" },
+            "confidence": { "type": "integer" },
+            "due_date": { "type": [ "string", "null" ] },
+            "evidence_quote": { "type": "string" }
+          },
+          "required": ["owner", "description", "confidence", "evidence_quote"]
+        }
+      },
+      "reconciliations": {
+        "type": "array",
+        "items": {
+          "type": "object",
+          "properties": {
+            "commitment_id": { "type": "string" },
+            "reason": { "type": "string" },
+            "evidence_quote": { "type": "string" }
+          },
+          "required": ["commitment_id", "reason", "evidence_quote"]
+        }
+      }
+    },
+    "required": ["memory_updates", "milestones", "commitments", "reconciliations"]
+  },
+  "permissions": {
+    "grants": [
+      {
+        "resource_type": "datastore_table",
+        "resource_name": "contacts",
+        "permission_ids": ["datastore.table.read", "datastore.record.read"]
+      },
+      {
+        "resource_type": "datastore_table",
+        "resource_name": "commitments",
+        "permission_ids": ["datastore.table.read", "datastore.record.read"]
+      }
+    ]
+  }
+}
