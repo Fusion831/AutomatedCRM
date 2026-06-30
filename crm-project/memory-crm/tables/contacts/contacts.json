@@ -86,6 +86,48 @@
         "HIGH",
         "CRITICAL"
       ]
+    },
+    {
+      "name": "recommended_action",
+      "type": "TEXT",
+      "required": false
+    },
+    {
+      "name": "recommendation_category",
+      "type": "ENUM",
+      "required": false,
+      "options": [
+        "FOLLOW_UP",
+        "SEND_DOCUMENT",
+        "SCHEDULE_MEETING",
+        "RESPOND",
+        "WAIT",
+        "REENGAGE",
+        "RESOLVE_BLOCKER",
+        "CLOSE_LOOP",
+        "NO_ACTION"
+      ]
+    },
+    {
+      "name": "recommendation_urgency",
+      "type": "ENUM",
+      "required": false,
+      "options": [
+        "LOW",
+        "MEDIUM",
+        "HIGH",
+        "CRITICAL"
+      ]
+    },
+    {
+      "name": "recommendation_reasoning",
+      "type": "JSON",
+      "required": false
+    },
+    {
+      "name": "recommendation_evidence",
+      "type": "JSON",
+      "required": false
     }
   ],
   "config": {}

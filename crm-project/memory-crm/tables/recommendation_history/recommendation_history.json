@@ -1,0 +1,37 @@
+{
+  "name": "recommendation_history",
+  "primary_key_column": "id",
+  "enable_rls": false,
+  "visibility": "POD",
+  "columns": [
+    {
+      "name": "contact_id",
+      "type": "UUID",
+      "required": true,
+      "foreign_key": {
+        "references": "contacts.id"
+      }
+    },
+    {
+      "name": "previous_recommendation",
+      "type": "TEXT",
+      "required": false
+    },
+    {
+      "name": "new_recommendation",
+      "type": "TEXT",
+      "required": true
+    },
+    {
+      "name": "reason",
+      "type": "TEXT",
+      "required": true
+    },
+    {
+      "name": "created_at",
+      "type": "DATETIME",
+      "required": true
+    }
+  ],
+  "config": {}
+}
