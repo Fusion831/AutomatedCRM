@@ -1,6 +1,6 @@
 {
   "name": "ingest-interaction-workflow",
-  "description": "Triggered by new interaction inserts. Prepares contact context, invokes the consolidated-extractor, reconciles commitments, and saves updates.",
+  "description": "Triggered by new interaction inserts. Prepares contact context, invokes the consolidated-extractor, reconciles commitments, saves updates, and evaluates relationship state.",
   "visibility": "private",
   "mode": "system",
   "start": {
@@ -90,6 +90,20 @@
           }
         }
       }
+    },
+    {
+      "id": "state_engine",
+      "type": "FUNCTION",
+      "label": "Determine Relationship State",
+      "config": {
+        "function_name": "determine_relationship_state_function",
+        "input_mapping": {
+          "contact_id": {
+            "type": "expression",
+            "value": "fetch_context.output.contact_id"
+          }
+        }
+      }
     }
   ],
   "edges": [
@@ -112,6 +126,11 @@
       "id": "edge_4",
       "source_node_id": "reconciliation",
       "target_node_id": "apply_updates"
+    },
+    {
+      "id": "edge_5",
+      "source_node_id": "apply_updates",
+      "target_node_id": "state_engine"
     }
   ]
 }
