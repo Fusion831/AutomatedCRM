@@ -74,6 +74,18 @@
       "name": "expected_next_touch_date",
       "type": "DATE",
       "required": false
+    },
+    {
+      "name": "attention_level",
+      "type": "ENUM",
+      "required": false,
+      "default": "LOW",
+      "options": [
+        "LOW",
+        "MEDIUM",
+        "HIGH",
+        "CRITICAL"
+      ]
     }
   ],
   "config": {}

@@ -1,6 +1,6 @@
 {
   "name": "ingest-interaction-workflow",
-  "description": "Triggered by new interaction inserts. Prepares contact context, invokes the consolidated-extractor, reconciles commitments, saves updates, and evaluates relationship state.",
+  "description": "Triggered by new interaction inserts. Prepares contact context, invokes the consolidated-extractor, reconciles commitments, saves updates, evaluates relationship state, and updates priority score.",
   "visibility": "private",
   "mode": "system",
   "start": {
@@ -104,6 +104,20 @@
           }
         }
       }
+    },
+    {
+      "id": "priority_engine",
+      "type": "FUNCTION",
+      "label": "Calculate Contact Priority",
+      "config": {
+        "function_name": "calculate_contact_priority_function",
+        "input_mapping": {
+          "contact_id": {
+            "type": "expression",
+            "value": "fetch_context.output.contact_id"
+          }
+        }
+      }
     }
   ],
   "edges": [
@@ -131,6 +145,11 @@
       "id": "edge_5",
       "source_node_id": "apply_updates",
       "target_node_id": "state_engine"
+    },
+    {
+      "id": "edge_6",
+      "source_node_id": "state_engine",
+      "target_node_id": "priority_engine"
     }
   ]
 }
