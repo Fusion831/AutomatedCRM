@@ -1,129 +1,163 @@
-# 🧠 MemoryCRM
-### *The AI-First Relationship Memory Layer for Founders*
+# MemoryCRM
 
-Traditional CRMs (like HubSpot or Salesforce) are built for sales forecasting, not relationship building. They force humans to act like data-entry clerks, resulting in fragmented context, forgotten promises, and lost opportunities. 
+### AI Relationship Operating System
 
-**MemoryCRM** changes the paradigm: **AI owns relationship memory; humans own relationship building.** It runs as a local-first, multi-agent workspace (Pod) on the Lemma Platform, automatically transforming raw transcripts and emails into structured, explainable context.
-
----
-
-## Key Product Differentiators
-
-### 1. The First-Class "Relationship Memory" Object
-Instead of unstructured text notes or dry contact cards, MemoryCRM maintains a structured thesis on every contact:
-*   **Who are they?** ➔ High-fidelity biographical context (e.g. *"Stripe dev lead, ex-YC, hates SOAP"*).
-*   **Why are we talking?** ➔ The fundamental premise of the connection.
-*   **What do they care about?** ➔ A JSON map of obsessions, pain points, and blockers.
-*   **What happened?** ➔ A chronological timeline of decisive milestones.
-*   **What is unresolved?** ➔ Inbound and outbound promises.
-*   **What should happen next?** ➔ Agent-suggested re-engagement actions.
-
-### 2. Human Attention States (Not Sales Pipelines)
-Relationships do not move in a straight line through a sales pipeline. We track attention states:
-*   `waiting_on_me` ➔ Founder owes a deliverable, email, or intro.
-*   `waiting_on_them` ➔ Founder is waiting for a reply or feedback.
-*   `mutual_exploration` ➔ Active, high-velocity conversation.
-*   `blocked` ➔ The connection has stalled due to a specific objection or constraint.
-*   `cooling` ➔ Engagement velocity is dropping.
-*   `reengagement_candidate` ➔ Dead connection flagged for resurrection by the agent.
-
-### 3. The Explainable Priority Queue
-Founders shouldn't have to guess why a contact is ranked #1. MemoryCRM surfaces the explicit reasons for priority:
-> **Why is Rahul #1?**  
-> `["Requested pricing (5 days ago)", "Founder owes response", "Opened proposal twice"]`
-
-### 4. Commitment Confidence
-Agents capture commitments (promises made by the founder or the client) and rate them with a confidence level (e.g. `95%` for *"I will send the deck by Friday"* vs `45%` for *"Let's talk soon"*).
+CRMs store contacts. MemoryCRM remembers relationships.
 
 ---
 
-## 🛠️ Database Schema & Architecture
+## The Problem
 
-Our database architecture is optimized for low-latency list loading and seamless evidence click-throughs:
+Founders do not lose opportunities because they forget to send emails.
+
+They lose opportunities because relationship context becomes fragmented. A conversation starts in an email, moves to a Zoom call, continues in a Slack thread, and gets referenced in a LinkedIn message weeks later. By the time you need to follow up, the full picture only exists across a dozen disconnected places — most of which you will not search before writing that follow-up.
+
+The result is predictable:
+
+- Follow-ups are missed
+- Commitments are forgotten
+- Conversations restart from scratch
+- High-value relationships quietly stall
+
+The problem is not contact management. The problem is relationship memory.
+
+---
+
+## What MemoryCRM Does
+
+Every time you have a conversation — email, call, meeting, message — MemoryCRM reads it, extracts what matters, and updates its understanding of the relationship.
+
+It tracks:
+
+- Who the person is, and what they care about
+- Why you are talking to them
+- What was promised, by whom, and when
+- What is still unresolved
+- What you should do next
+
+Then, when you return to a conversation after two weeks on product work, or three months of silence, it tells you everything you need to know before you type the first word.
+
+---
+
+## How It Works
+
+Interactions come in — emails, meeting transcripts, notes. An AI reads them and extracts structured facts: commitments, blockers, key moments, relationship signals. That is the only thing the AI does.
+
+Everything else — determining relationship state, calculating priority, generating recommendations — is done by deterministic code. Rules. Not inference.
+
+This means every output is explainable:
+
+> Rahul is ranked first because he requested pricing five days ago, the founder still owes a response, and the proposal has been viewed twice.
+
+No black boxes. Every decision traces back to a specific fact in the system.
+
+---
+
+## The Core Questions
+
+The product is designed to answer five questions for every relationship:
+
+1. Who is this person?
+2. Why are we talking?
+3. What do they care about?
+4. What is unresolved?
+5. What should happen next?
+
+When a founder opens any contact, those five questions are answered immediately — without searching email, without reading notes, without asking a colleague what happened.
+
+---
+
+## Relationship States
+
+Instead of a sales pipeline, MemoryCRM tracks human attention states.
+
+| State | Meaning |
+|---|---|
+| waiting on me | The founder owes a response, document, or introduction |
+| waiting on them | The founder has acted and is waiting |
+| mutual exploration | Active, ongoing engagement |
+| blocked | Progress is stopped by a known obstacle |
+| cooling | Momentum is decreasing |
+| reengagement candidate | The relationship has stalled and may be worth revisiting |
+
+---
+
+## Key Features
+
+### Relationship Memory Screen
+
+The core screen. Opens any relationship and immediately surfaces: who the person is, why they matter, what happened, what was promised, and what should happen next. Designed for the moment you return to a dormant conversation.
+
+### Commitment Tracking
+
+Every promise made in a conversation is extracted automatically — who made it, what it was, when it is due, and how confident the system is that it was a real commitment. These are surfaced as open loops until they are resolved.
+
+### Priority Queue
+
+All relationships ranked by urgency, with explicit reasons for each ranking. The queue answers one question: what should I work on right now? Every rank position is justified.
+
+### Context Resurrection
+
+For relationships that have gone quiet, the system reconstructs the full history: what the relationship was about, the last point of real engagement, what was left unresolved, and what re-entry looks like. A founder can recover months of context in seconds.
+
+### Open Loops Dashboard
+
+Every unfulfilled commitment, across all relationships, in one place. Nothing slips through.
+
+### Decision Audit Trail
+
+Every state change, priority change, and recommendation is logged with the reason it was made. If the system says a relationship is blocked, you can see exactly which fact triggered that determination and when.
+
+### Recommendation Feedback
+
+When the system recommends an action, the founder can mark it accepted, rejected, or completed. The system learns which types of recommendations are acted on and adjusts confidence accordingly over time.
+
+---
+
+## What It Is Not
+
+MemoryCRM is not a sales pipeline tool. It does not do revenue forecasting, lead scoring, outbound sequencing, or email automation.
+
+It does one thing: remember relationships so founders do not have to.
+
+---
+
+## Project Layout
 
 ```
-                    ┌────────────────────────┐
-                    │        CONTACTS        │ (First-class Memory Card)
-                    └───────────┬────────────┘
-                                │
-                  ┌─────────────┴─────────────┐
-                  ▼                           ▼
-      ┌───────────────────────┐   ┌───────────────────────┐
-      │     INTERACTIONS      ├──►│      COMMITMENTS      │ (Open Loops)
-      │ (Raw Email/Transcript)│   │ (Outbound vs Inbound) │
-      └───────────▲───────────┘   └───────────────────────┘
-                  │
-      ┌───────────┴───────────┐
-      │      MILESTONES       │ (High-fidelity summaries)
-      │ (Linked back to logs) │
-      └───────────────────────┘
+AutomatedlemmaCRM/
+├── crm-project/          # Main codebase
+│   ├── memory-crm/       # The intelligence layer (tables, engines, agents)
+│   └── backend/          # Service layer wrapping the intelligence APIs
+├── lemma-platform/       # Local runtime (Postgres, Redis, API server)
+└── knowledge/            # Platform documentation
 ```
 
-1.  **`contacts`**: Holds the core relationship memory, attention states, priority scores, and reason logs.
-2.  **`relationship_state_history`**: Logs state transitions (e.g. `exploration` ➔ `cooling`) to analyze relationship velocity.
-3.  **`interactions`**: The timeline feed. *To prevent query latency, raw meeting transcripts are stored as files on disk, referenced via `transcript_path`.*
-4.  **`relationship_milestones`**: Summary highlights (e.g. *"Agreed to pilot pricing"*) with a foreign key back to the proving `interactions` record.
-5.  **`commitments`**: Active loops (promises) with owner directions and confidence scores.
-6.  **`recommendations`**: Stored AI re-engagement drafts and advice history.
+The intelligence layer lives in `memory-crm/`. It contains fourteen data tables, ten deterministic engine functions, two LLM agents, and ten test suites. None of the engines that make decisions call an LLM. The LLM is only used to read conversations and extract structured facts.
 
 ---
 
-## 📂 Repository Structure
+## Setup
 
-*   `crm-project/` — Main development workspace.
-    *   `memory-crm/` — Declarative Pod configurations (table schemas, agent instructions, functions).
-        *   `pod.json` — Pod descriptor.
-        *   `schemas.py` — Pydantic validation models.
-        *   `tables/` — Database schemas for PostgreSQL.
-    *   `validate_env.py` — Pre-flight environment check.
-*   `lemma-platform/` — The local runtime stack (FastAPI backend, Postgres, Redis, sandbox).
-*   `knowledge/` — Platform onboarding and SDK documentation.
+Detailed setup instructions are in [crm-project/README.md](crm-project/README.md).
+
+You will need Docker, Python 3.11+, and a Gemini API key.
 
 ---
 
-## ⚡ Local Development Quickstart
+## Status
 
-### Prerequisites
-*   Docker & Docker Compose
-*   Python 3.10+ (and `uv` package manager)
-*   A Gemini API Key (set up via `lemma-stack`)
+The intelligence backend is complete. What exists:
 
-### Booting the Environment (Windows / PowerShell)
+- Full relationship memory system with extraction, state determination, priority scoring, and recommendations
+- Context resurrection agent
+- Commitment tracking and open loop monitoring
+- Recommendation feedback loop with confidence adjustment
+- Complete decision audit trail
+- Ten test suites covering all engines
 
-1.  **Start the local Lemma Platform**:
-    ```powershell
-    cd lemma-platform
-    .\install.ps1
-    lemma-stack start
-    ```
-2.  **Login & Set Context**:
-    ```powershell
-    lemma auth login
-    # Select MemoryCRM Organization & Pod
-    ```
-3.  **Validate Environment & Postgres Connection**:
-    ```powershell
-    cd ../crm-project
-    python validate_env.py
-    ```
-4.  **Import the Pod Schemas**:
-    ```powershell
-    lemma pods import ./memory-crm --upsert
-    ```
-5.  **Verify Setup**:
-    ```powershell
-    lemma pods describe
-    ```
+What does not yet exist:
 
----
-
-## 🎯 Implementation Status
-
-| Feature | Scope / Details | Status |
-| :--- | :--- | :---: |
-| **Relationship Memory** | Custom schema containing bio, drivers, priority, next actions | **Must Ship (Done)** |
-| **Timeline Feed** | Chronological interactions linked to transcripts | **Must Ship (Done)** |
-| **Promise Extraction** | Automatic commitment tracker with direction & confidence | **Must Ship** |
-| **Open Loops Cockpit** | View for active commitments | **Must Ship** |
-| **Priority Queue** | Explainable priority calculation | **Must Ship** |
-| **Context Resurrection** | Dead deal scanner and reconnect email draft generation | **Must Ship** |
+- A frontend
+- Live integrations (Gmail, Slack, WhatsApp, Zoom)
+- HTTP API endpoints for the feedback and analytics services
