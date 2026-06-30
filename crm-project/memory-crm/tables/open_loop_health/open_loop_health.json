@@ -1,0 +1,48 @@
+{
+  "name": "open_loop_health",
+  "primary_key_column": "id",
+  "enable_rls": false,
+  "visibility": "POD",
+  "columns": [
+    {
+      "name": "commitment_id",
+      "type": "UUID",
+      "required": true,
+      "foreign_key": {
+        "references": "commitments.id"
+      }
+    },
+    {
+      "name": "health",
+      "type": "ENUM",
+      "required": true,
+      "options": [
+        "HEALTHY",
+        "AT_RISK",
+        "OVERDUE",
+        "ABANDONED"
+      ]
+    },
+    {
+      "name": "risk_score",
+      "type": "INTEGER",
+      "required": true
+    },
+    {
+      "name": "risk_reasons",
+      "type": "TEXT",
+      "required": true
+    },
+    {
+      "name": "effective_due_date",
+      "type": "DATE",
+      "required": true
+    },
+    {
+      "name": "updated_at",
+      "type": "DATETIME",
+      "required": true
+    }
+  ],
+  "config": {}
+}

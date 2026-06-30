@@ -1,0 +1,29 @@
+{
+  "name": "daily_briefs",
+  "primary_key_column": "id",
+  "enable_rls": false,
+  "visibility": "POD",
+  "columns": [
+    {
+      "name": "brief_date",
+      "type": "DATE",
+      "required": true
+    },
+    {
+      "name": "summary_text",
+      "type": "TEXT",
+      "required": true
+    },
+    {
+      "name": "brief_json",
+      "type": "TEXT",
+      "required": true
+    },
+    {
+      "name": "created_at",
+      "type": "DATETIME",
+      "required": true
+    }
+  ],
+  "config": {}
+}

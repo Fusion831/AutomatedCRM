@@ -1,6 +1,6 @@
 {
   "name": "ingest-interaction-workflow",
-  "description": "Triggered by new interaction inserts. Prepares contact context, invokes the consolidated-extractor, reconciles commitments, saves updates, evaluates relationship state, updates priority score, generates recommendations, and rebuilds the context resurrection cache snapshot.",
+  "description": "Triggered by new interaction inserts. Prepares contact context, invokes consolidated-extractor, reconciles commitments, saves updates, evaluates relationship state, updates priority score, generates recommendations, rebuilds the context resurrection cache, evaluates open loops health, and refreshes the daily command center snapshot.",
   "visibility": "private",
   "mode": "system",
   "start": {
@@ -146,6 +146,29 @@
           }
         }
       }
+    },
+    {
+      "id": "evaluate_open_loops",
+      "type": "FUNCTION",
+      "label": "Evaluate Open Loops Health",
+      "config": {
+        "function_name": "evaluate_open_loops_function",
+        "input_mapping": {
+          "contact_id": {
+            "type": "expression",
+            "value": "fetch_context.output.contact_id"
+          }
+        }
+      }
+    },
+    {
+      "id": "daily_brief",
+      "type": "FUNCTION",
+      "label": "Generate Daily Summary & Snapshot",
+      "config": {
+        "function_name": "generate_daily_brief_function",
+        "input_mapping": {}
+      }
     }
   ],
   "edges": [
@@ -188,6 +211,16 @@
       "id": "edge_8",
       "source_node_id": "recommendation_engine",
       "target_node_id": "resurrection_snapshot"
+    },
+    {
+      "id": "edge_9",
+      "source_node_id": "resurrection_snapshot",
+      "target_node_id": "evaluate_open_loops"
+    },
+    {
+      "id": "edge_10",
+      "source_node_id": "evaluate_open_loops",
+      "target_node_id": "daily_brief"
     }
   ]
 }

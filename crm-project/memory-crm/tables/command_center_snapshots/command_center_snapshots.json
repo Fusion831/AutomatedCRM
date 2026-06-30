@@ -1,0 +1,24 @@
+{
+  "name": "command_center_snapshots",
+  "primary_key_column": "id",
+  "enable_rls": false,
+  "visibility": "POD",
+  "columns": [
+    {
+      "name": "snapshot_date",
+      "type": "DATE",
+      "required": true
+    },
+    {
+      "name": "snapshot_json",
+      "type": "TEXT",
+      "required": true
+    },
+    {
+      "name": "created_at",
+      "type": "DATETIME",
+      "required": true
+    }
+  ],
+  "config": {}
+}
