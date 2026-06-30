@@ -22,6 +22,7 @@ class GenerateRecommendationResponse(BaseModel):
     evidence: List[str]
     rec_changed: bool
     history_recorded: bool
+    recommendation_confidence: int
 
 # Category Priority Order
 CATEGORY_PRIORITY = [
@@ -269,7 +270,70 @@ async def generate_recommendation_function(ctx: FunctionContext, data: GenerateR
     candidates.sort(key=lambda x: get_category_priority(x["category"]))
     chosen = candidates[0]
     
-    # 6. Check if recommendation changed materials
+    # 6. Calculate recommendation confidence based on prior success
+    rec_confidence = 85
+    try:
+        # Query all historical recommendations for this contact
+        rec_hist_query = f"SELECT id, new_recommendation FROM recommendation_history WHERE contact_id = '{contact_id}'"
+        rec_hist_res = pod.query(rec_hist_query)
+        rec_hist_items = rec_hist_res.to_dict().get("items", [])
+        
+        # Query all feedback for this contact
+        fb_query = f"SELECT recommendation_id, feedback_action FROM recommendation_feedback WHERE contact_id = '{contact_id}'"
+        fb_res = pod.query(fb_query)
+        fb_items = fb_res.to_dict().get("items", [])
+        
+        # Build maps
+        rec_id_to_action = {item["id"]: item["new_recommendation"] for item in rec_hist_items if "id" in item}
+        
+        # Map action to category helper
+        def get_category_from_action(action_str: str) -> str:
+            action_lower = action_str.lower()
+            if "blocker" in action_lower:
+                return "RESOLVE_BLOCKER"
+            elif "respond" in action_lower or "reply" in action_lower:
+                return "RESPOND"
+            elif any(k in action_lower for k in ["send", "share", "document", "deck", "slides"]):
+                return "SEND_DOCUMENT"
+            elif any(k in action_lower for k in ["schedule", "meeting", "call"]):
+                return "SCHEDULE_MEETING"
+            elif "follow up" in action_lower or "reach out" in action_lower:
+                return "FOLLOW_UP"
+            elif "re-engage" in action_lower or "reengage" in action_lower:
+                return "REENGAGE"
+            elif "wait" in action_lower:
+                return "WAIT"
+            else:
+                return "NO_ACTION"
+                
+        # Count stats for chosen["category"]
+        positive_count = 0
+        negative_count = 0
+        ignored_count = 0
+        
+        for fb in fb_items:
+            rec_id = fb.get("recommendation_id")
+            action_str = rec_id_to_action.get(rec_id)
+            if not action_str:
+                continue
+            cat = get_category_from_action(action_str)
+            if cat == chosen["category"]:
+                act = fb.get("feedback_action")
+                if act in ["ACCEPTED", "COMPLETED"]:
+                    positive_count += 1
+                elif act == "REJECTED":
+                    negative_count += 1
+                elif act in ["IGNORED", "EXPIRED"]:
+                    ignored_count += 1
+                    
+        total_fb = positive_count + negative_count + ignored_count
+        if total_fb > 0:
+            rec_confidence = 85 + (positive_count * 5) - (negative_count * 15) - (ignored_count * 5)
+            rec_confidence = max(30, min(100, rec_confidence))
+    except Exception:
+        rec_confidence = 85
+
+    # 7. Check if recommendation changed materials
     rec_changed = (chosen["action"] != previous_action or chosen["category"] != previous_category)
     history_recorded = False
     
@@ -279,10 +343,56 @@ async def generate_recommendation_function(ctx: FunctionContext, data: GenerateR
         "recommendation_category": chosen["category"],
         "recommendation_urgency": chosen["urgency"],
         "recommendation_reasoning": json.dumps(chosen["reasoning"]),
-        "recommendation_evidence": json.dumps(chosen["evidence"])
+        "recommendation_evidence": json.dumps(chosen["evidence"]),
+        "recommendation_confidence": rec_confidence
     })
     
     if rec_changed:
+        # Find the last recommendation history record BEFORE we create a new one,
+        # so we can mark it as EXPIRED.
+        try:
+            last_rec_query = f"SELECT id FROM recommendation_history WHERE contact_id = '{contact_id}' ORDER BY created_at DESC LIMIT 1"
+            last_rec_res = pod.query(last_rec_query)
+            last_rec_items = last_rec_res.to_dict().get("items", [])
+            if last_rec_items:
+                prev_rec_id = last_rec_items[0]["id"]
+                
+                # Check if it already has final feedback (COMPLETED/REJECTED/EXPIRED/IGNORED)
+                fb_check_query = f"SELECT feedback_action FROM recommendation_feedback WHERE recommendation_id = '{prev_rec_id}'"
+                fb_check_res = pod.query(fb_check_query)
+                fb_check_items = fb_check_res.to_dict().get("items", [])
+                
+                has_final_fb = any(item.get("feedback_action") in ["COMPLETED", "REJECTED", "EXPIRED", "IGNORED"] for item in fb_check_items)
+                
+                if not has_final_fb:
+                    # Create EXPIRED feedback
+                    pod.table("recommendation_feedback").create({
+                        "id": str(uuid.uuid4()),
+                        "recommendation_id": prev_rec_id,
+                        "contact_id": contact_id,
+                        "feedback_action": "EXPIRED",
+                        "feedback_reason": f"Superseded by new recommendation: {chosen['category']} ({chosen['action']})",
+                        "created_at": datetime.utcnow().isoformat() + "Z"
+                    })
+                    
+                    # Record decision event
+                    pod.table("decision_events").create({
+                        "id": str(uuid.uuid4()),
+                        "contact_id": contact_id,
+                        "event_type": "RECOMMENDATION_EXPIRED",
+                        "event_source": "recommendation_engine",
+                        "previous_value": f"{previous_category} ({previous_action})" if previous_category or previous_action else "None",
+                        "new_value": "EXPIRED",
+                        "reason": f"Superseded by new recommendation: {chosen['category']} ({chosen['action']})",
+                        "evidence": json.dumps([prev_rec_id]),
+                        "metadata": json.dumps({
+                            "recommendation_id": prev_rec_id
+                        }),
+                        "created_at": datetime.utcnow().isoformat() + "Z"
+                    })
+        except Exception:
+            pass
+
         pod.table("recommendation_history").create({
             "id": str(uuid.uuid4()),
             "contact_id": contact_id,
@@ -317,5 +427,6 @@ async def generate_recommendation_function(ctx: FunctionContext, data: GenerateR
         reasoning=chosen["reasoning"],
         evidence=chosen["evidence"],
         rec_changed=rec_changed,
-        history_recorded=history_recorded
+        history_recorded=history_recorded,
+        recommendation_confidence=rec_confidence
     )
