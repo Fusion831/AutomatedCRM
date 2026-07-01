@@ -1,7 +1,7 @@
 {
   "name": "consolidated-extractor",
   "description": "Agent that performs structured fact and milestone extraction, promise detection, and commitment reconciliation in a single LLM execution.",
-  "visibility": "private",
+  "visibility": "POD",
   "instruction": {
     "$file": "instruction.md"
   },

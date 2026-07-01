@@ -19,6 +19,21 @@ import {
   Check
 } from "lucide-react";
 
+import {
+  fetchAllContacts,
+  fetchAllCommitments,
+  fetchAllInteractions,
+  fetchLatestDailyBrief,
+  ingestNewInteraction,
+  updateCommitment,
+  updateRecord,
+  createRecord,
+  recordRecommendationFeedback,
+  triggerDailyBriefGeneration,
+  triggerRecommendationGeneration,
+  runQuery
+} from "../lib/lemmaClient";
+
 // ============================================================================
 // TYPE DEFINITIONS
 // ============================================================================
@@ -43,6 +58,7 @@ interface Contact {
   drivers: string[];
   objections: string[];
   timeline: TimelineEvent[];
+  recommendedAction: string | null;
 }
 
 interface Commitment {
@@ -75,243 +91,56 @@ interface StreamItem {
   btnLabel: string;
 }
 
-// ============================================================================
-// HIGH-FIDELITY MOCK DATABASES
-// ============================================================================
-
-const INITIAL_CONTACTS: Contact[] = [
-  {
-    id: "rahul-sharma",
-    name: "Rahul Sharma",
-    company: "Acme Corp",
-    title: "VP Engineering",
-    email: "rahul@acmecorp.com",
-    temperature: "Active",
-    state: "waiting_on_me",
-    lastInteraction: "Tuesday, 2:15 PM",
-    priorityScore: 85,
-    summary: "Evaluating observability tool integrations to replace Datadog. Focused on performance benchmarks.",
-    thesis: "Rahul is a highly technical decision-maker concerned about migration latency. Benchmark metrics successfully cleared objections; now waiting for pricing proposal approval.",
-    drivers: ["Latency under 2ms", "SOC2 compliance", "Developer ergonomics"],
-    objections: ["Migration complexity", "Datadog transition overlap cost"],
-    timeline: [
-      {
-        timeframe: "Yesterday",
-        description: "Zoom sync. Approved latency metrics under 2ms. Requested pricing proposal."
-      },
-      {
-        timeframe: "4 Days Ago",
-        description: "Emailed over latency validation benchmarks and SOC2 compliance documentation."
-      },
-      {
-        timeframe: "2 Weeks Ago",
-        description: "Initial discovery call. Discussed migration complexity and Datadog overlap."
+function formatRelativeTime(dateStr: string | null): string {
+  if (!dateStr) return "Never";
+  try {
+    const d = new Date(dateStr);
+    const now = new Date();
+    const diffMs = now.getTime() - d.getTime();
+    const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+    if (diffDays === 0) {
+      const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
+      if (diffHours === 0) {
+        const diffMins = Math.floor(diffMs / (1000 * 60));
+        return diffMins <= 1 ? "Just now" : `${diffMins} minutes ago`;
       }
-    ]
-  },
-  {
-    id: "sarah-jenkins",
-    name: "Sarah Jenkins",
-    company: "NextGen AI",
-    title: "CEO & Founder",
-    email: "sarah@nextgen.ai",
-    temperature: "Active",
-    state: "waiting_on_me",
-    lastInteraction: "Yesterday, 11:30 AM",
-    priorityScore: 78,
-    summary: "Building technical advisory relationship while preparing for NextGen's Seed/Series A fundraising round.",
-    thesis: "Sarah has a strong execution track record in the NLP space. High conviction on team velocity; currently waiting to share detailed financial projections.",
-    drivers: ["Strategic GTM guidance", "Cap table construction", "Lead term sheets"],
-    objections: ["Customer Acquisition Cost CAC overhead"],
-    timeline: [
-      {
-        timeframe: "Yesterday",
-        description: "Discussed sales pipeline scaling model. Promised to share our CAC spreadsheet projections."
-      },
-      {
-        timeframe: "4 Days Ago",
-        description: "Reviewed initial investor deck drafts. Shared fundraising roadmap template."
-      },
-      {
-        timeframe: "2 Weeks Ago",
-        description: "Initial coffee meeting. High-level alignment on NLP orchestration market size."
-      }
-    ]
-  },
-  {
-    id: "marcus-aurelius",
-    name: "Marcus Aurelius",
-    company: "Rome Ventures",
-    title: "Managing Partner",
-    email: "marcus@romeventures.vc",
-    temperature: "Cooling down",
-    state: "waiting_on_them",
-    lastInteraction: "16 days ago",
-    priorityScore: 40,
-    summary: "Warming relationship for prospective Series A investment. Exchanged candidates for sales hires.",
-    thesis: "Marcus is conservative on early scaling velocity. Shared Head of Sales job description to warm the relationship and leverage his candidate network.",
-    drivers: ["Developer community growth", "Consistent sales pipeline velocity"],
-    objections: ["GTM execution speed"],
-    timeline: [
-      {
-        timeframe: "2 Weeks Ago",
-        description: "Shared candidate pipeline. Emailed Sales hiring profile."
-      },
-      {
-        timeframe: "1 Month Ago",
-        description: "Partner meeting at Rome office. Outlined platform expansion goals."
-      }
-    ]
-  },
-  {
-    id: "elena-rostova",
-    name: "Elena Rostova",
-    company: "SecureAuth",
-    title: "Director of Security",
-    email: "elena@secureauth.io",
-    temperature: "Reviving",
-    state: "waiting_on_them",
-    lastInteraction: "3 days ago",
-    priorityScore: 65,
-    summary: "Validating cloud proxy identity integration schemas for enterprise enterprise sign-on.",
-    thesis: "Elena is a key compliance gatekeeper. Demo went exceptionally well. Awaiting her introduction to the VP of Infrastructure to discuss SAML keys.",
-    drivers: ["AES-256 rest encryption", "No raw token storage"],
-    objections: ["SAML raw metadata token storage"],
-    timeline: [
-      {
-        timeframe: "3 Days Ago",
-        description: "Completed product demonstration. Elena approved rest-encryption architecture."
-      },
-      {
-        timeframe: "1 Week Ago",
-        description: "Emailed initial security checklist and SOC2 report."
-      }
-    ]
+      return `${diffHours} hour${diffHours > 1 ? "s" : ""} ago`;
+    }
+    if (diffDays === 1) return "Yesterday";
+    if (diffDays < 7) return `${diffDays} days ago`;
+    return d.toLocaleDateString(undefined, { month: "short", day: "numeric" });
+  } catch (e) {
+    return String(dateStr);
   }
-];
-
-const INITIAL_COMMITMENTS: Commitment[] = [
-  {
-    id: "c1",
-    contactId: "rahul-sharma",
-    description: "Send detailed financial model and CAC projections",
-    owner: "founder",
-    dueDate: "2026-07-03",
-    status: "open"
-  },
-  {
-    id: "c2",
-    contactId: "sarah-jenkins",
-    description: "Share CAC projections and cap table benchmarks",
-    owner: "founder",
-    dueDate: "2026-07-04",
-    status: "open"
-  },
-  {
-    id: "c3",
-    contactId: "elena-rostova",
-    description: "Introduce to VP of Infrastructure",
-    owner: "contact",
-    dueDate: null,
-    status: "open"
-  }
-];
-
-const INITIAL_LOGS: ProcessedLog[] = [
-  {
-    id: "l1",
-    type: "email",
-    source: "Elena Rostova (SecureAuth)",
-    timestamp: "Today, 8:22 AM",
-    status: "completed"
-  },
-  {
-    id: "l2",
-    type: "slack",
-    source: "Marcus Aurelius (Rome Ventures)",
-    timestamp: "Yesterday, 4:08 PM",
-    status: "completed"
-  },
-  {
-    id: "l3",
-    type: "zoom",
-    source: "Rahul Sharma (Acme Corp)",
-    timestamp: "Yesterday, 3:15 PM",
-    status: "completed"
-  }
-];
-
-const INITIAL_STREAM_ITEMS: StreamItem[] = [
-  {
-    id: "s1",
-    contactId: "rahul-sharma",
-    type: "Commitment",
-    person: "Rahul Sharma",
-    company: "Acme Corp",
-    action: "Send pricing proposal",
-    why: "Rahul requested this during your Zoom call yesterday. Pricing is the final blocker before evaluation.",
-    timing: "Due in 2 days (Fri)",
-    context: "Promise outstanding on founder. Latency metrics were approved.",
-    btnLabel: "Draft Pricing Follow-Up"
-  },
-  {
-    id: "s2",
-    contactId: "sarah-jenkins",
-    type: "Meeting Preparation",
-    person: "Sarah Jenkins",
-    company: "NextGen AI",
-    action: "Review financial model",
-    why: "CAC spreadsheet projections must be aligned before the seed term sheet review.",
-    timing: "Due tomorrow",
-    context: "Preparation for upcoming investor call scheduled for Friday.",
-    btnLabel: "Draft Projections Follow-Up"
-  },
-  {
-    id: "s3",
-    contactId: "elena-rostova",
-    type: "Waiting On Founder",
-    person: "Elena Rostova",
-    company: "SecureAuth",
-    action: "Security review pending",
-    why: "Elena approved the proxy encryption demo. We need to follow up for the VP intro.",
-    timing: "Due next week",
-    context: "Enterprise SAML token integration path clearance.",
-    btnLabel: "Ping Elena for Intro"
-  },
-  {
-    id: "s4",
-    contactId: "marcus-aurelius",
-    type: "Re-engagement",
-    person: "Marcus Aurelius",
-    company: "Rome Ventures",
-    action: "Follow up after demo",
-    why: "No touchpoint for 16 days. Warm the relationship by sharing candidate job descriptions.",
-    timing: "16 days inactive",
-    context: "Warming relationship for upcoming Series A growth investment.",
-    btnLabel: "Ping Marcus"
-  }
-];
+}
 
 export default function Page() {
   // Navigation State
   const [activeTab, setActiveTab] = useState<"today" | "people" | "inbox">("today");
 
   // Core State
-  const [contacts, setContacts] = useState<Contact[]>(INITIAL_CONTACTS);
-  const [selectedContactId, setSelectedContactId] = useState<string>("rahul-sharma");
-  const [commitments, setCommitments] = useState<Commitment[]>(INITIAL_COMMITMENTS);
-  const [logs, setLogs] = useState<ProcessedLog[]>(INITIAL_LOGS);
+  const [contacts, setContacts] = useState<Contact[]>([]);
+  const [selectedContactId, setSelectedContactId] = useState<string>("");
+  const [commitments, setCommitments] = useState<Commitment[]>([]);
+  const [logs, setLogs] = useState<ProcessedLog[]>([]);
   
   // Attention Stream state
-  const [streamItems, setStreamItems] = useState<StreamItem[]>(INITIAL_STREAM_ITEMS);
+  const [streamItems, setStreamItems] = useState<StreamItem[]>([]);
   const [activeStreamIndex, setActiveStreamIndex] = useState(0);
 
   // Search state
   const [searchQuery, setSearchQuery] = useState("");
 
+  // Loading and refreshing states
+  const [isLoading, setIsLoading] = useState(true);
+  const [isRefreshing, setIsRefreshing] = useState(false);
+  const [briefSummaryText, setBriefSummaryText] = useState("Loading morning briefing...");
+
   // Quick Capture State
   const [isQuickCaptureOpen, setIsQuickCaptureOpen] = useState(false);
   const [quickCaptureText, setQuickCaptureText] = useState("");
+  const [quickCaptureContactId, setQuickCaptureContactId] = useState("");
+  const [quickCaptureNewName, setQuickCaptureNewName] = useState("");
   const [isProcessingCapture, setIsProcessingCapture] = useState(false);
 
   // Follow-Up Composer State
@@ -325,15 +154,221 @@ export default function Page() {
   const selectedContact = contacts.find(c => c.id === selectedContactId) || contacts[0];
   const streamRef = useRef<HTMLDivElement>(null);
 
+  // Load all data from Lemma
+  const loadAllData = async (selectContactId?: string) => {
+    try {
+      const dbContacts = await fetchAllContacts();
+      if (dbContacts.length === 0) {
+        setContacts([]);
+        setCommitments([]);
+        setStreamItems([]);
+        setLogs([]);
+        setBriefSummaryText("No contacts found in datastore. Create one to begin.");
+        setIsLoading(false);
+        return;
+      }
+
+      const dbCommitments = await fetchAllCommitments();
+      const dbInteractions = await fetchAllInteractions();
+      const dbBrief = await fetchLatestDailyBrief();
+      
+      if (dbBrief) {
+        setBriefSummaryText(dbBrief.summary_text);
+      } else {
+        setBriefSummaryText("No morning briefing generated yet. Sync intelligence to compile.");
+      }
+
+      const allMilestones = await runQuery("SELECT * FROM relationship_milestones ORDER BY occurred_at DESC");
+
+      const mappedContacts: Contact[] = dbContacts.map(c => {
+        const who = c.who_are_they || "";
+        const company = who.split(" at ")[1] || "Independent";
+        const title = who.split(" at ")[0] || "Founder";
+        
+        let temp: Contact["temperature"] = "Active";
+        if (c.relationship_state === "blocked") temp = "Cold";
+        else if (c.relationship_state === "cooling") temp = "Cooling down";
+        else if (c.relationship_state === "reengagement_candidate") temp = "Reviving";
+
+        let state: Contact["state"] = "mutual_exploration";
+        if (c.relationship_state === "waiting_on_me" || c.relationship_state === "waiting_on_them") {
+          state = c.relationship_state;
+        }
+
+        let drivers: string[] = [];
+        let objections: string[] = [];
+        if (c.key_drivers) {
+          try {
+            const parsed = typeof c.key_drivers === "string" ? JSON.parse(c.key_drivers) : c.key_drivers;
+            if (parsed && typeof parsed === "object") {
+              if (Array.isArray(parsed)) {
+                drivers = parsed;
+              } else {
+                drivers = parsed.drivers || [];
+                objections = parsed.objections || [];
+              }
+            }
+          } catch(e) {
+            drivers = [String(c.key_drivers)];
+          }
+        }
+
+        const contactMilestones = allMilestones.filter((m: any) => m.contact_id === c.id);
+        const timeline = contactMilestones.map((m: any) => ({
+          timeframe: formatRelativeTime(m.occurred_at),
+          description: m.summary
+        }));
+
+        return {
+          id: c.id,
+          name: c.name,
+          company,
+          title,
+          email: `${c.name.toLowerCase().replace(/\s+/g, "")}@example.com`,
+          temperature: temp,
+          state,
+          lastInteraction: formatRelativeTime(c.last_interaction),
+          priorityScore: c.priority_score || 0,
+          summary: c.who_are_they || "No summary profile created yet.",
+          thesis: c.why_talking || "No strategic thesis established.",
+          drivers: drivers.length > 0 ? drivers : ["Relationship context established"],
+          objections: objections,
+          timeline: timeline.length > 0 ? timeline : [{ timeframe: "Initial", description: "Contact added to MemoryCRM." }],
+          recommendedAction: c.recommended_action || "No immediate action required."
+        };
+      });
+
+      setContacts(mappedContacts);
+
+      // Default selected contact selection
+      const activeId = selectContactId || selectedContactId;
+      if (activeId && mappedContacts.some(c => c.id === activeId)) {
+        setSelectedContactId(activeId);
+      } else if (mappedContacts.length > 0) {
+        setSelectedContactId(mappedContacts[0].id);
+        setQuickCaptureContactId(mappedContacts[0].id);
+      }
+
+      // Map commitments
+      const mappedComms: Commitment[] = dbCommitments.map(c => ({
+        id: c.id,
+        contactId: c.contact_id,
+        description: c.description,
+        owner: c.owner === "contact" ? "contact" : "founder",
+        dueDate: c.due_date ? c.due_date.substring(0, 10) : null,
+        status: c.status === "open" ? "open" : "completed"
+      }));
+      setCommitments(mappedComms);
+
+      // Map logs
+      const mappedLogs: ProcessedLog[] = dbInteractions.map(i => {
+        let type: ProcessedLog["type"] = "email";
+        if (i.type === "meeting") type = "zoom";
+        else if (i.type === "slack") type = "slack";
+        else if (i.type === "email") type = "email";
+
+        return {
+          id: i.id,
+          type,
+          source: `${i.contact_name} (${i.contact_who ? i.contact_who.split(" at ")[1] || "Independent" : "Independent"})`,
+          timestamp: formatRelativeTime(i.occurred_at),
+          status: "completed"
+        };
+      });
+      setLogs(mappedLogs);
+
+      // Map stream items
+      const activeRecs = dbContacts.filter(c => c.recommended_action && c.recommended_action !== "No action required");
+      const mappedStream: StreamItem[] = activeRecs.map(c => {
+        const reasoning = c.recommendation_reasoning as any;
+        let why = "";
+        if (typeof reasoning === "string") {
+          why = reasoning;
+          if (why.startsWith("[")) {
+            try {
+              const arr = JSON.parse(why);
+              why = arr.join(". ");
+            } catch(e) {}
+          }
+        } else if (Array.isArray(reasoning)) {
+          why = reasoning.join(". ");
+        } else if (reasoning) {
+          why = String(reasoning);
+        }
+
+        const evidence = c.recommendation_evidence as any;
+        let context = "";
+        if (typeof evidence === "string") {
+          context = evidence;
+          if (context.startsWith("[")) {
+            try {
+              const arr = JSON.parse(context);
+              context = arr.join(". ");
+            } catch(e) {}
+          }
+        } else if (Array.isArray(evidence)) {
+          context = evidence.join(". ");
+        } else if (evidence) {
+          context = String(evidence);
+        }
+
+        let type: StreamItem["type"] = "Commitment";
+        if (c.recommendation_category === "RESPOND" || c.recommendation_category === "RESOLVE_BLOCKER") {
+          type = "Waiting On Founder";
+        } else if (c.recommendation_category === "SCHEDULE_MEETING") {
+          type = "Meeting Preparation";
+        } else if (c.recommendation_category === "REENGAGE") {
+          type = "Re-engagement";
+        }
+
+        let timing = c.recommendation_urgency || "LOW";
+        if (timing === "HIGH") timing = "Urgent";
+        else if (timing === "CRITICAL") timing = "Immediate";
+
+        return {
+          id: c.id,
+          contactId: c.id,
+          type,
+          person: c.name,
+          company: (c.who_are_they || "").split(" at ")[1] || "Independent",
+          action: c.recommended_action || "",
+          why: why || "Action recommended by priorities engine.",
+          timing,
+          context: context || "Identified based on current relationship thread.",
+          btnLabel: c.recommendation_category === "RESPOND" ? "Draft Response" :
+                    c.recommendation_category === "SCHEDULE_MEETING" ? "Schedule Meeting" :
+                    c.recommendation_category === "RESOLVE_BLOCKER" ? "Resolve Blocker" :
+                    "Draft Follow-Up"
+        };
+      });
+      setStreamItems(mappedStream);
+
+      setIsLoading(false);
+    } catch(err) {
+      console.error("Error loading Lemma datastore:", err);
+      setIsLoading(false);
+    }
+  };
+
+  // Initial load
+  useEffect(() => {
+    loadAllData();
+  }, []);
+
+  // Update quick capture selection based on active contact selection
+  useEffect(() => {
+    if (selectedContactId) {
+      setQuickCaptureContactId(selectedContactId);
+    }
+  }, [selectedContactId]);
+
   // Intercept scroll inside the stream queue container
   useEffect(() => {
     const el = streamRef.current;
-    if (!el || activeTab !== "today") return;
+    if (!el || activeTab !== "today" || streamItems.length === 0) return;
 
     const onWheel = (e: WheelEvent) => {
-      // Prevent default page scroll
       e.preventDefault();
-
       if (e.deltaY > 15) {
         setActiveStreamIndex((prev) => Math.min(prev + 1, streamItems.length - 1));
       } else if (e.deltaY < -15) {
@@ -349,6 +384,7 @@ export default function Page() {
 
   // Keyboard navigation inside stream
   const handleStreamKeyDown = (e: React.KeyboardEvent) => {
+    if (streamItems.length === 0) return;
     if (e.key === "ArrowDown") {
       e.preventDefault();
       setActiveStreamIndex((prev) => Math.min(prev + 1, streamItems.length - 1));
@@ -358,67 +394,59 @@ export default function Page() {
     }
   };
 
-  // Quick Capture
-  const handleQuickCaptureSubmit = (e: React.FormEvent) => {
+  // Quick Capture submit: write interaction and trigger workflow
+  const handleQuickCaptureSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!quickCaptureText.trim()) return;
 
     setIsProcessingCapture(true);
 
-    setTimeout(() => {
-      const newContact: Contact = {
-        id: "tom-henderson",
-        name: "Tom Henderson",
-        company: "Cascade Ventures",
-        title: "Investment Associate",
-        email: "tom@cascade.vc",
-        temperature: "Active",
-        state: "mutual_exploration",
-        lastInteraction: "Just now",
-        priorityScore: 50,
-        summary: "Investment Associate. Met at Blue Bottle Coffee for relationship building.",
-        thesis: "Tom recently moved from NY to SF. Focuses on dev tools. Casually staying in touch.",
-        drivers: ["Developer tools", "Database infrastructure"],
-        objections: ["No immediate deals in timeline"],
-        timeline: [
-          {
-            timeframe: "Just now",
-            description: "Pasted coffee conversation note."
-          }
-        ]
-      };
+    try {
+      let targetId = quickCaptureContactId;
 
-      setContacts((prev) => [newContact, ...prev]);
-      setSelectedContactId("tom-henderson");
-      setLogs((prev) => [
-        {
-          id: `l-capture-${Date.now()}`,
-          type: "zoom",
-          source: "Pasted note",
-          timestamp: "Just now",
-          status: "completed"
-        },
-        ...prev
-      ]);
+      if (quickCaptureContactId === "new") {
+        if (!quickCaptureNewName.trim()) {
+          alert("Please enter a name for the new contact");
+          setIsProcessingCapture(false);
+          return;
+        }
 
+        const newRec = await createRecord("contacts", {
+          name: quickCaptureNewName.trim(),
+          relationship_state: "mutual_exploration",
+          tier: "B",
+          priority_score: 50,
+          who_are_they: `${quickCaptureNewName.trim()} at Prospective Company`
+        });
+        targetId = newRec.id;
+      }
+
+      await ingestNewInteraction(targetId, "manual", quickCaptureText);
+
+      // Ingesting automatically fires the pipeline. Wait for execution completion.
+      setTimeout(async () => {
+        await loadAllData(targetId);
+        setIsProcessingCapture(false);
+        setQuickCaptureText("");
+        setQuickCaptureNewName("");
+        setIsQuickCaptureOpen(false);
+
+        const contactName = contacts.find(c => c.id === targetId)?.name || quickCaptureNewName || "Contact";
+        setClosureMessage(`✓ Note ingested. ${contactName} intelligence regenerated.`);
+        setTimeout(() => setClosureMessage(null), 4000);
+      }, 3500);
+    } catch (err) {
+      console.error("Error submitting capture:", err);
       setIsProcessingCapture(false);
-      setQuickCaptureText("");
-      setIsQuickCaptureOpen(false);
-
-      setClosureMessage("✓ Note parsed. Tom Henderson added.");
-      setTimeout(() => setClosureMessage(null), 4000);
-    }, 1500);
+    }
   };
 
   // Compose Trigger
   const handleTriggerComposer = (contact: Contact) => {
-    let draftBody = "";
-    if (contact.id === "rahul-sharma") {
+    let draftBody = `Hi ${contact.name.split(" ")[0]},\n\nGreat speaking recently. I wanted to follow up on our discussion regarding ${contact.summary.toLowerCase()}.\n\nLet me know when you're free to catch up.\n\nBest,\nDaksh`;
+    
+    if (contact.id === "5bae59cb-25f5-472e-a4e3-3ff9e946efcc" || contact.name.includes("Rahul")) {
       draftBody = `Hi Rahul,\n\nGreat speaking yesterday. I wanted to follow up with the pricing proposal we discussed for Acme Corp's integration.\n\nLet me know if this works and if we're good to schedule the pilot deep-dive.\n\nBest,\nDaksh`;
-    } else if (contact.id === "sarah-jenkins") {
-      draftBody = `Hi Sarah,\n\nFollowing up on our sync. Attached are the detailed financial model and CAC projections for NextGen AI.\n\nLooking forward to aligning on next steps.\n\nBest,\nDaksh`;
-    } else {
-      draftBody = `Hi ${contact.name.split(" ")[0]},\n\nCasual follow up on our previous conversation. Let me know when you're free for a quick catch up.\n\nBest,\nDaksh`;
     }
 
     setActiveDraft({
@@ -429,42 +457,43 @@ export default function Page() {
   };
 
   // Send Draft (Closure mechanism)
-  const handleSendDraft = () => {
+  const handleSendDraft = async () => {
     if (!activeDraft) return;
 
     const contactId = activeDraft.contact.id;
 
-    // Shift state
-    setContacts((prev) =>
-      prev.map((c) => {
-        if (c.id === contactId) {
-          return {
-            ...c,
-            state: "waiting_on_them",
-            temperature: "Reviving",
-            lastInteraction: "Today (Follow-up sent)"
-          };
-        }
-        return c;
-      })
-    );
+    try {
+      const commsToComplete = commitments.filter(
+        (c) => c.contactId === contactId && c.status === "open" && c.owner === "founder"
+      );
 
-    // Resolve commitments
-    setCommitments((prev) =>
-      prev.map((com) => {
-        if (com.contactId === contactId && com.status === "open" && com.owner === "founder") {
-          return { ...com, status: "completed" };
-        }
-        return com;
-      })
-    );
+      for (const com of commsToComplete) {
+        await updateCommitment(com.id, "completed");
+      }
 
-    setClosureMessage(`✓ Email dispatched. Status updated.`);
-    setActiveDraft(null);
+      await ingestNewInteraction(contactId, "email", `Dispatched follow-up email: ${activeDraft.subject}`);
 
-    setTimeout(() => {
-      setClosureMessage(null);
-    }, 4000);
+      await updateRecord("contacts", contactId, {
+        relationship_state: "waiting_on_them"
+      });
+
+      try {
+        await recordRecommendationFeedback(contactId, "ACCEPTED", "Follow-up email sent.");
+      } catch(e) {
+        console.warn("Could not record feedback logs:", e);
+      }
+
+      await loadAllData(contactId);
+
+      setClosureMessage(`✓ Email dispatched. Status updated.`);
+      setActiveDraft(null);
+
+      setTimeout(() => {
+        setClosureMessage(null);
+      }, 4000);
+    } catch(err) {
+      console.error("Error finishing send flow:", err);
+    }
   };
 
   return (
@@ -538,38 +567,63 @@ export default function Page() {
           ========================================================================= */}
       <main className="flex-grow max-w-6xl w-full mx-auto px-8 py-10">
         
-        {/* =====================================================================
-            TODAY VIEW (EDITORIAL MORNING BRIEFING + DYNAMIC ATTENTION STREAM)
-            ===================================================================== */}
-        {activeTab === "today" && (
-          <div className="space-y-16 animate-in fade-in duration-200">
-            
-            {/* Morning Briefing */}
-            <section className="space-y-6">
-              <h2 className="font-display text-[2.6rem] font-medium tracking-tight text-[#1D1D1B] leading-tight">
-                Good morning, Daksh.
-              </h2>
-              <div className="space-y-2 text-[1.1rem] text-[#6B655E] font-light max-w-2xl">
-                <p>Since you checked in yesterday:</p>
-                <div className="space-y-1 pl-4 border-l border-[#EBE6D9] mt-3">
-                  <p className="flex items-center space-x-2 text-[#1D1D1B]">
-                    <span className="w-1.5 h-1.5 rounded-full bg-[#A36A2B]" />
-                    <span>2 relationships are <span className="text-[#A36A2B] font-medium">cooling down</span></span>
-                  </p>
-                  <p className="flex items-center space-x-2 text-[#1D1D1B]">
-                    <span className="w-1.5 h-1.5 rounded-full bg-[#A14A3A]" />
-                    <span>1 commitment is <span className="text-[#A14A3A] font-medium">overdue</span></span>
-                  </p>
-                  <p className="flex items-center space-x-2 text-[#1D1D1B]">
-                    <span className="w-1.5 h-1.5 rounded-full bg-[#6A7C52]" />
-                    <span>4 new items added to your attention stream</span>
-                  </p>
-                </div>
-              </div>
-            </section>
+        {isLoading ? (
+          <div className="flex flex-col items-center justify-center space-y-4 py-32">
+            <div className="flex items-center space-x-2">
+              <div className="w-2 h-2 rounded-full bg-[#A36A2B] animate-bounce" style={{ animationDelay: "0ms" }} />
+              <div className="w-2 h-2 rounded-full bg-[#A36A2B] animate-bounce" style={{ animationDelay: "150ms" }} />
+              <div className="w-2 h-2 rounded-full bg-[#A36A2B] animate-bounce" style={{ animationDelay: "300ms" }} />
+            </div>
+            <p className="text-[0.9rem] text-[#6B655E] font-light">Retrieving relationship memory...</p>
+          </div>
+        ) : (
+          <>
+            {/* =====================================================================
+                TODAY VIEW (EDITORIAL MORNING BRIEFING + DYNAMIC ATTENTION STREAM)
+                ===================================================================== */}
+            {activeTab === "today" && (
+              <div className="space-y-16 animate-in fade-in duration-200">
+                
+                {/* Morning Briefing */}
+                <section className="space-y-6">
+                  <div className="flex items-center justify-between">
+                    <h2 className="font-display text-[2.6rem] font-medium tracking-tight text-[#1D1D1B] leading-tight">
+                      Good morning, Daksh.
+                    </h2>
+                    <button
+                      onClick={async () => {
+                        setIsRefreshing(true);
+                        try {
+                          setBriefSummaryText("Syncing relationship intelligence...");
+                          for (const c of contacts) {
+                            try {
+                              await triggerRecommendationGeneration(c.id);
+                            } catch(e) {}
+                          }
+                          await triggerDailyBriefGeneration();
+                          await loadAllData();
+                          setClosureMessage("✓ Intelligence updated successfully.");
+                          setTimeout(() => setClosureMessage(null), 4000);
+                        } catch(e) {
+                          console.error(e);
+                        } finally {
+                          setIsRefreshing(false);
+                        }
+                      }}
+                      disabled={isRefreshing}
+                      className="flex items-center space-x-1.5 text-[0.8rem] text-[#A36A2B] hover:text-[#1D1D1B] transition-colors border border-[#EBE6D9] rounded-lg px-2.5 py-1 bg-[#FCFAF6] shadow-2xs disabled:opacity-50"
+                    >
+                      <RefreshCw className={`w-3.5 h-3.5 ${isRefreshing ? "animate-spin" : ""}`} />
+                      <span>{isRefreshing ? "Updating..." : "Sync Intelligence"}</span>
+                    </button>
+                  </div>
+                  <div className="space-y-2 text-[1.1rem] text-[#6B655E] font-light max-w-2xl whitespace-pre-line border-l border-[#EBE6D9] pl-4 leading-relaxed">
+                    {briefSummaryText}
+                  </div>
+                </section>
 
-            {/* Split layout: Needs Attention and Dynamic Attention Stream */}
-            <div className="grid grid-cols-1 md:grid-cols-5 gap-12 items-start">
+                {/* Split layout: Needs Attention and Dynamic Attention Stream */}
+                <div className="grid grid-cols-1 md:grid-cols-5 gap-12 items-start">
               
               {/* Needs Attention Column (3/5) */}
               <div className="md:col-span-3 space-y-8">
@@ -908,8 +962,7 @@ export default function Page() {
                       <div className="space-y-1">
                         <span className="text-[0.72rem] uppercase tracking-widest font-semibold text-[#6B655E]">Suggested action</span>
                         <p className="text-[0.9rem] text-[#1D1D1B] font-medium">
-                          {selectedContact.id === "rahul-sharma" ? "Draft proposal and follow up." :
-                           selectedContact.id === "sarah-jenkins" ? "Draft projections follow up." : "Ping casually to warm contact."}
+                          {selectedContact.recommendedAction || "No immediate action required."}
                         </p>
                       </div>
 
@@ -997,7 +1050,8 @@ export default function Page() {
             </div>
           </div>
         )}
-
+          </>
+        )}
       </main>
 
       {/* =========================================================================
@@ -1099,22 +1153,63 @@ export default function Page() {
               </button>
             </div>
 
-            <form onSubmit={handleQuickCaptureSubmit} className="flex-grow flex flex-col p-6 space-y-4">
+            <form onSubmit={handleQuickCaptureSubmit} className="flex-grow flex flex-col p-6 space-y-4 overflow-y-auto">
               <p className="text-[0.85rem] text-[#6B655E] font-light leading-relaxed">
-                Paste meeting transcripts, email logs, or manual coffee notes. The assistant will parse context and extract milestones.
+                Paste meeting transcripts, email logs, or manual coffee notes. The assistant will parse context, extract milestones, and recompute priorities.
               </p>
 
-              <textarea
-                value={quickCaptureText}
-                onChange={(e) => setQuickCaptureText(e.target.value)}
-                placeholder="Met Tom Henderson for coffee at Blue Bottle. He mentioned he recently moved from NY to SF and is focusing on developer tooling..."
-                rows={12}
-                required
-                disabled={isProcessingCapture}
-                className="w-full bg-[#FCFAF6] border border-[#EBE6D9] rounded-lg p-4 text-[0.9rem] leading-relaxed resize-none flex-grow"
-              />
+              <div className="space-y-1.5">
+                <label className="text-[0.72rem] uppercase tracking-wider font-semibold text-[#6B655E] block">
+                  Associated Contact
+                </label>
+                <select
+                  value={quickCaptureContactId}
+                  onChange={(e) => setQuickCaptureContactId(e.target.value)}
+                  disabled={isProcessingCapture}
+                  className="w-full bg-[#FCFAF6] border border-[#EBE6D9] rounded-lg p-2.5 text-[0.9rem] text-[#1D1D1B] focus:outline-none focus:border-[#D5CBB5]"
+                >
+                  {contacts.map((c) => (
+                    <option key={c.id} value={c.id}>
+                      {c.name} ({c.company})
+                    </option>
+                  ))}
+                  <option value="new">+ Create new contact...</option>
+                </select>
+              </div>
 
-              <div className="flex items-center justify-end space-x-3 pt-4 border-t border-[#EBE6D9]">
+              {quickCaptureContactId === "new" && (
+                <div className="space-y-1.5 animate-in fade-in duration-200">
+                  <label className="text-[0.72rem] uppercase tracking-wider font-semibold text-[#6B655E] block">
+                    New Contact Name
+                  </label>
+                  <input
+                    type="text"
+                    placeholder="e.g. Tom Henderson"
+                    value={quickCaptureNewName}
+                    onChange={(e) => setQuickCaptureNewName(e.target.value)}
+                    required
+                    disabled={isProcessingCapture}
+                    className="w-full bg-[#FCFAF6] border border-[#EBE6D9] rounded-lg p-2.5 text-[0.9rem] text-[#1D1D1B] focus:outline-none focus:border-[#D5CBB5]"
+                  />
+                </div>
+              )}
+
+              <div className="space-y-1.5 flex-grow flex flex-col">
+                <label className="text-[0.72rem] uppercase tracking-wider font-semibold text-[#6B655E] block">
+                  Conversation / Meeting transcript / Note
+                </label>
+                <textarea
+                  value={quickCaptureText}
+                  onChange={(e) => setQuickCaptureText(e.target.value)}
+                  placeholder="Met for coffee. Discussed pricing timelines and key drivers..."
+                  rows={8}
+                  required
+                  disabled={isProcessingCapture}
+                  className="w-full bg-[#FCFAF6] border border-[#EBE6D9] rounded-lg p-4 text-[0.9rem] leading-relaxed resize-none flex-grow focus:outline-none focus:border-[#D5CBB5]"
+                />
+              </div>
+
+              <div className="flex items-center justify-end space-x-3 pt-4 border-t border-[#EBE6D9] shrink-0">
                 <button
                   type="button"
                   onClick={() => setIsQuickCaptureOpen(false)}

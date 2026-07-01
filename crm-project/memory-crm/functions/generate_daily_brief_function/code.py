@@ -60,7 +60,7 @@ async def generate_daily_brief_function(ctx: FunctionContext, data: GenerateDail
     curr_date_str = curr_date.isoformat()
     
     # 2. Fetch all contacts
-    contacts_res = pod.query("SELECT id, name, company, relationship_state, priority_score, attention_level, recommended_action FROM contacts")
+    contacts_res = pod.query("SELECT id, name, who_are_they, relationship_state, priority_score, attention_level, recommended_action FROM contacts")
     contacts = contacts_res.to_dict().get("items", [])
     
     contacts_map = {c["id"]: c for c in contacts}
@@ -84,10 +84,12 @@ async def generate_daily_brief_function(ctx: FunctionContext, data: GenerateDail
     
     for c in contacts:
         c_id = c["id"]
+        who_are_they = c.get("who_are_they") or ""
+        company = who_are_they.split(" at ")[1] if " at " in who_are_they else ""
         c_brief = ContactBrief(
             contact_id=c_id,
             name=c.get("name") or "Unknown",
-            company=c.get("company") or "",
+            company=company,
             relationship_state=c.get("relationship_state") or "mutual_exploration",
             priority_score=int(c.get("priority_score") or 0),
             attention_level=c.get("attention_level") or "LOW",

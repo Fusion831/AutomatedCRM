@@ -36,11 +36,6 @@
       "name": "feedback_reason",
       "type": "TEXT",
       "required": false
-    },
-    {
-      "name": "created_at",
-      "type": "DATETIME",
-      "required": true
     }
   ],
   "config": {}

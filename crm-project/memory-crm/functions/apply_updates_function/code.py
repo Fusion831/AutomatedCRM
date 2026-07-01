@@ -1,3 +1,7 @@
+#input_type_name: ApplyUpdatesInput
+#output_type_name: ApplyUpdatesOutput
+#function_name: apply_updates_function
+
 import json
 import uuid
 from datetime import datetime, date

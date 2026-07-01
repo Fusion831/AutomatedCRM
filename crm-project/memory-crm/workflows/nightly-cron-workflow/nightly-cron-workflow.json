@@ -1,12 +1,12 @@
 {
   "name": "nightly-cron-workflow",
   "description": "Triggered nightly to re-evaluate open loop SLAs, recalculate priority scores for temporal degradation, and rebuild the daily command center snapshot.",
-  "visibility": "private",
-  "mode": "system",
+  "visibility": "POD",
   "start": {
     "type": "SCHEDULED",
     "config": {
-      "cron_expression": "0 0 * * *"
+      "cron_expression": "0 0 * * *",
+      "schedule_type": "CRON"
     }
   },
   "nodes": [
@@ -31,14 +31,9 @@
   ],
   "edges": [
     {
-      "id": "edge_1",
-      "source_node_id": "start",
-      "target_node_id": "evaluate_open_loops"
-    },
-    {
       "id": "edge_2",
-      "source_node_id": "evaluate_open_loops",
-      "target_node_id": "daily_brief"
+      "source": "evaluate_open_loops",
+      "target": "daily_brief"
     }
   ]
 }

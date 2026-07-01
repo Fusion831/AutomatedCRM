@@ -1,13 +1,14 @@
 {
   "name": "ingest-interaction-workflow",
   "description": "Triggered by new interaction inserts. Prepares contact context, invokes consolidated-extractor, reconciles commitments, saves updates, evaluates relationship state, updates priority score, generates recommendations, rebuilds the context resurrection cache, evaluates open loops health, and refreshes the daily command center snapshot.",
-  "visibility": "private",
-  "mode": "system",
+  "visibility": "POD",
   "start": {
     "type": "DATASTORE_EVENT",
     "config": {
       "table_name": "interactions",
-      "operations": ["INSERT"]
+      "operations": [
+        "INSERT"
+      ]
     }
   },
   "nodes": [
@@ -173,54 +174,49 @@
   ],
   "edges": [
     {
-      "id": "edge_1",
-      "source_node_id": "start",
-      "target_node_id": "fetch_context"
-    },
-    {
       "id": "edge_2",
-      "source_node_id": "fetch_context",
-      "target_node_id": "extractor"
+      "source": "fetch_context",
+      "target": "extractor"
     },
     {
       "id": "edge_3",
-      "source_node_id": "extractor",
-      "target_node_id": "reconciliation"
+      "source": "extractor",
+      "target": "reconciliation"
     },
     {
       "id": "edge_4",
-      "source_node_id": "reconciliation",
-      "target_node_id": "apply_updates"
+      "source": "reconciliation",
+      "target": "apply_updates"
     },
     {
       "id": "edge_5",
-      "source_node_id": "apply_updates",
-      "target_node_id": "state_engine"
+      "source": "apply_updates",
+      "target": "state_engine"
     },
     {
       "id": "edge_6",
-      "source_node_id": "state_engine",
-      "target_node_id": "priority_engine"
+      "source": "state_engine",
+      "target": "priority_engine"
     },
     {
       "id": "edge_7",
-      "source_node_id": "priority_engine",
-      "target_node_id": "recommendation_engine"
+      "source": "priority_engine",
+      "target": "recommendation_engine"
     },
     {
       "id": "edge_8",
-      "source_node_id": "recommendation_engine",
-      "target_node_id": "resurrection_snapshot"
+      "source": "recommendation_engine",
+      "target": "resurrection_snapshot"
     },
     {
       "id": "edge_9",
-      "source_node_id": "resurrection_snapshot",
-      "target_node_id": "evaluate_open_loops"
+      "source": "resurrection_snapshot",
+      "target": "evaluate_open_loops"
     },
     {
       "id": "edge_10",
-      "source_node_id": "evaluate_open_loops",
-      "target_node_id": "daily_brief"
+      "source": "evaluate_open_loops",
+      "target": "daily_brief"
     }
   ]
 }

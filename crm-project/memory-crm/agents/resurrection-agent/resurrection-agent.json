@@ -1,7 +1,7 @@
 {
   "name": "resurrection-agent",
   "description": "Synthesizes memory, commitments, state history, and interactions to reconstruct a high-fidelity relationship resurrection snapshot.",
-  "visibility": "private",
+  "visibility": "POD",
   "instruction": {
     "$file": "instruction.md"
   },

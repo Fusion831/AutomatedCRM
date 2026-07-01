@@ -37,11 +37,6 @@
       "name": "effective_due_date",
       "type": "DATE",
       "required": true
-    },
-    {
-      "name": "updated_at",
-      "type": "DATETIME",
-      "required": true
     }
   ],
   "config": {}

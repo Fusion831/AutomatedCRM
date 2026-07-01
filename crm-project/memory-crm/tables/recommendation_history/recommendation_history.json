@@ -26,11 +26,6 @@
       "name": "reason",
       "type": "TEXT",
       "required": true
-    },
-    {
-      "name": "created_at",
-      "type": "DATETIME",
-      "required": true
     }
   ],
   "config": {}
