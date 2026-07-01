@@ -116,7 +116,7 @@ function formatRelativeTime(dateStr: string | null): string {
 
 export default function Page() {
   // Navigation State
-  const [activeTab, setActiveTab] = useState<"today" | "people" | "inbox">("today");
+  const [activeTab, setActiveTab] = useState<"today" | "people" | "inbox" | "import">("today");
 
   // Core State
   const [contacts, setContacts] = useState<Contact[]>([]);
@@ -150,6 +150,17 @@ export default function Page() {
     body: string;
   } | null>(null);
   const [closureMessage, setClosureMessage] = useState<string | null>(null);
+
+  // Import Conversation State
+  const [importContactId, setImportContactId] = useState("");
+  const [importChannel, setImportChannel] = useState<"meeting" | "email" | "slack" | "manual">("meeting");
+  const [importText, setImportText] = useState("");
+  const [importStage, setImportStage] = useState<"idle" | "processing" | "done">("idle");
+  const [importDiff, setImportDiff] = useState<{
+    contactName: string;
+    before: { state: string; priority: number; commitments: number; recommendation: string };
+    after:  { state: string; priority: number; commitments: number; recommendation: string };
+  } | null>(null);
 
   const selectedContact = contacts.find(c => c.id === selectedContactId) || contacts[0];
   const streamRef = useRef<HTMLDivElement>(null);
@@ -441,6 +452,94 @@ export default function Page() {
     }
   };
 
+  // ── Import Conversation ─────────────────────────────────────────────────────
+
+  const EXAMPLE_TRANSCRIPTS: { label: string; channel: "meeting" | "email" | "slack" | "manual"; contactKey: string; text: string }[] = [
+    {
+      label: "Series A Follow-Up (Sarah Jenkins)",
+      channel: "meeting",
+      contactKey: "Sarah",
+      text: `[Zoom call — June 30, 2026]\n\nDaksh: Sarah, thanks for making time. Did you get a chance to review the migration case study I sent?\n\nSarah: Yes! The Acme migration numbers were impressive. I shared them with my partners. We're ready to move to the next step. Can you send over the full financial model and a term sheet outline by Friday? If those look good, we'll book the formal partner meeting for next week.\n\nDaksh: Absolutely. I'll get the model and draft term sheet to you by Thursday EOD.\n\nSarah: Perfect. One more thing — our compliance team needs your SOC 2 report. Can you include that?\n\nDaksh: Will do. I'll package everything together.`
+    },
+    {
+      label: "Pricing Agreement (Rahul Sharma)",
+      channel: "email",
+      contactKey: "Rahul",
+      text: `From: rahul@acmecorp.com\nTo: daksh@memorycrm.com\nSubject: Re: Observability Proposal\n\nHi Daksh,\n\nTeam has reviewed the pricing deck — we're aligned on the Enterprise tier. A few things before we sign:\n\n1. We need a custom SLA with 99.95% uptime guarantee.\n2. Our legal team wants a data processing agreement (DPA) before contract sign-off.\n3. Can we schedule a technical deep-dive with your eng team next week?\n\nIf you can confirm these, we're ready to move to contract stage.\n\nBest,\nRahul`
+    },
+    {
+      label: "Integration Check-in (Michael Chen)",
+      channel: "slack",
+      contactKey: "Michael",
+      text: `[Slack DM — #general]\n\nMichael: Hey Daksh! Sorry for the radio silence. We finally completed our security audit. Turns out we passed with flying colors.\n\nMichael: We're now unblocked on the webhook integration. Can you send over the API documentation and sandbox credentials? Our team wants to start a proof of concept this sprint.\n\nDaksh: That's great news! I'll send the docs and sandbox access today.\n\nMichael: Thanks. Also — we have a board review in 3 weeks. If the POC goes well, I'd love to include this in our infrastructure roadmap presentation.`
+    },
+    {
+      label: "Re-engagement (Elena Rostova)",
+      channel: "email",
+      contactKey: "Elena",
+      text: `From: elena@cloudflare.com\nTo: daksh@memorycrm.com\nSubject: Re: SDK Launch\n\nHi Daksh,\n\nSaw the Lemma SDK launch announcement — congratulations! The edge compute use case you described is exactly what we've been looking for.\n\nOur team has capacity to start a channel partnership evaluation in Q3. I'd like to set up a call with our VP of Partnerships. Are you available the week of July 14th?\n\nAlso, could you send over your partnership deck and pricing for volume resellers?\n\nLooking forward to reconnecting.\n\nElena`
+    }
+  ];
+
+  const handleImportConversation = async () => {
+    if (!importText.trim() || !importContactId) return;
+    setImportStage("processing");
+    setImportDiff(null);
+
+    // Snapshot before-state
+    const beforeContact = contacts.find(c => c.id === importContactId);
+    const beforeCommitmentsCount = commitments.filter(c => c.contactId === importContactId && c.status === "open").length;
+    const before = {
+      state: beforeContact?.state ?? "mutual_exploration",
+      priority: beforeContact?.priorityScore ?? 0,
+      commitments: beforeCommitmentsCount,
+      recommendation: beforeContact?.recommendedAction ?? "None"
+    };
+
+    try {
+      await ingestNewInteraction(importContactId, importChannel, importText);
+
+      // Wait for the Lemma workflow to propagate (ingest → extract → recommend → priority)
+      await new Promise(r => setTimeout(r, 4500));
+      await loadAllData(importContactId);
+
+      // Snapshot after-state from freshly loaded data
+      const afterContact = contacts.find(c => c.id === importContactId);
+      const afterCommitmentsCount = commitments.filter(c => c.contactId === importContactId && c.status === "open").length;
+
+      // contacts state may not be updated yet due to closure — re-fetch direct
+      const freshContacts = await import("../lib/lemmaClient").then(m => m.fetchAllContacts());
+      const freshContact = freshContacts.find((c: any) => c.id === importContactId);
+      const freshCommitments = await import("../lib/lemmaClient").then(m => m.fetchAllCommitments());
+      const freshCommCount = freshCommitments.filter((c: any) => c.contact_id === importContactId && c.status === "open").length;
+
+      setImportDiff({
+        contactName: beforeContact?.name ?? "Contact",
+        before,
+        after: {
+          state: freshContact?.relationship_state ?? before.state,
+          priority: freshContact?.priority_score ?? before.priority,
+          commitments: freshCommCount,
+          recommendation: freshContact?.recommended_action ?? before.recommendation
+        }
+      });
+
+      setImportStage("done");
+    } catch (err) {
+      console.error("Import failed:", err);
+      setImportStage("idle");
+    }
+  };
+
+  const handleLoadExample = (ex: typeof EXAMPLE_TRANSCRIPTS[0]) => {
+    const match = contacts.find(c => c.name.includes(ex.contactKey));
+    if (match) setImportContactId(match.id);
+    setImportChannel(ex.channel);
+    setImportText(ex.text);
+    setImportDiff(null);
+    setImportStage("idle");
+  };
+
   // Compose Trigger
   const handleTriggerComposer = (contact: Contact) => {
     let draftBody = `Hi ${contact.name.split(" ")[0]},\n\nGreat speaking recently. I wanted to follow up on our discussion regarding ${contact.summary.toLowerCase()}.\n\nLet me know when you're free to catch up.\n\nBest,\nDaksh`;
@@ -539,6 +638,16 @@ export default function Page() {
               }`}
             >
               Inbox
+            </button>
+            <button
+              onClick={() => setActiveTab("import")}
+              className={`text-[0.9rem] transition-colors relative py-1 ${
+                activeTab === "import"
+                  ? "text-[#1D1D1B] font-medium border-b border-[#1D1D1B]"
+                  : "text-[#6B655E] hover:text-[#1D1D1B]"
+              }`}
+            >
+              Import
             </button>
           </nav>
 
@@ -1048,6 +1157,209 @@ export default function Page() {
                 })
               )}
             </div>
+          </div>
+        )}
+
+        {/* =====================================================================
+            IMPORT CONVERSATION VIEW
+            ===================================================================== */}
+        {activeTab === "import" && (
+          <div className="space-y-10 animate-in fade-in duration-200 max-w-3xl">
+
+            {/* Header */}
+            <div className="space-y-1">
+              <h2 className="font-display text-[1.8rem] font-semibold tracking-tight">Import Conversation</h2>
+              <p className="text-[#6B655E] text-[0.9rem] font-light">
+                Paste a transcript and watch the full AI pipeline run — extraction, commitment detection, state transition, priority recalculation.
+              </p>
+            </div>
+
+            {/* Example Transcripts */}
+            <div className="space-y-2">
+              <p className="text-[0.72rem] uppercase tracking-wider font-semibold text-[#6B655E]">Load Example Transcript</p>
+              <div className="flex flex-wrap gap-2">
+                {EXAMPLE_TRANSCRIPTS.map((ex) => (
+                  <button
+                    key={ex.label}
+                    onClick={() => handleLoadExample(ex)}
+                    className="text-[0.8rem] px-3 py-1.5 rounded-lg border border-[#EBE6D9] bg-[#FCFAF6] text-[#6B655E] hover:border-[#D5CBB5] hover:text-[#1D1D1B] transition-all"
+                  >
+                    {ex.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Form */}
+            <div className="space-y-5 bg-[#FCFAF6] border border-[#EBE6D9] rounded-xl p-6">
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-1.5">
+                  <label className="text-[0.72rem] uppercase tracking-wider font-semibold text-[#6B655E] block">Contact</label>
+                  <select
+                    value={importContactId}
+                    onChange={e => { setImportContactId(e.target.value); setImportDiff(null); setImportStage("idle"); }}
+                    disabled={importStage === "processing"}
+                    className="w-full bg-[#F8F5EF] border border-[#EBE6D9] rounded-lg p-2.5 text-[0.88rem] text-[#1D1D1B] focus:outline-none focus:border-[#D5CBB5]"
+                  >
+                    <option value="">— Select a contact —</option>
+                    {contacts.map(c => (
+                      <option key={c.id} value={c.id}>{c.name} · {c.company}</option>
+                    ))}
+                  </select>
+                </div>
+                <div className="space-y-1.5">
+                  <label className="text-[0.72rem] uppercase tracking-wider font-semibold text-[#6B655E] block">Channel</label>
+                  <select
+                    value={importChannel}
+                    onChange={e => setImportChannel(e.target.value as any)}
+                    disabled={importStage === "processing"}
+                    className="w-full bg-[#F8F5EF] border border-[#EBE6D9] rounded-lg p-2.5 text-[0.88rem] text-[#1D1D1B] focus:outline-none focus:border-[#D5CBB5]"
+                  >
+                    <option value="meeting">Zoom / Meeting</option>
+                    <option value="email">Email Thread</option>
+                    <option value="slack">Slack / Chat</option>
+                    <option value="manual">Manual Note</option>
+                  </select>
+                </div>
+              </div>
+
+              <div className="space-y-1.5">
+                <label className="text-[0.72rem] uppercase tracking-wider font-semibold text-[#6B655E] block">Conversation Text</label>
+                <textarea
+                  value={importText}
+                  onChange={e => { setImportText(e.target.value); if (importStage === "done") { setImportStage("idle"); setImportDiff(null); } }}
+                  placeholder="Paste a Zoom transcript, email thread, Slack conversation, or free-form note..."
+                  rows={12}
+                  disabled={importStage === "processing"}
+                  className="w-full bg-[#F8F5EF] border border-[#EBE6D9] rounded-lg p-4 text-[0.88rem] leading-relaxed resize-none focus:outline-none focus:border-[#D5CBB5] font-mono"
+                />
+              </div>
+
+              <div className="flex items-center justify-between pt-2">
+                <button
+                  onClick={() => { setImportText(""); setImportDiff(null); setImportStage("idle"); }}
+                  disabled={importStage === "processing"}
+                  className="text-[0.82rem] text-[#6B655E] hover:text-[#1D1D1B] disabled:opacity-40"
+                >
+                  Clear
+                </button>
+                <button
+                  onClick={handleImportConversation}
+                  disabled={importStage === "processing" || !importText.trim() || !importContactId}
+                  className="bg-[#1D1D1B] hover:bg-[#2D2B28] disabled:bg-[#9A9287] text-[#FCFAF6] text-[0.88rem] font-semibold px-5 py-2 rounded-lg transition-colors flex items-center space-x-2"
+                >
+                  {importStage === "processing" ? (
+                    <><RefreshCw className="w-4 h-4 animate-spin" /><span>Processing Pipeline...</span></>
+                  ) : (
+                    <><FileText className="w-4 h-4" /><span>Process Conversation</span></>
+                  )}
+                </button>
+              </div>
+            </div>
+
+            {/* Pipeline Progress */}
+            {importStage === "processing" && (
+              <div className="space-y-4 animate-in fade-in duration-200">
+                <p className="text-[0.72rem] uppercase tracking-wider font-semibold text-[#6B655E]">Pipeline Running</p>
+                <div className="space-y-2">
+                  {[
+                    "Ingesting interaction record...",
+                    "Extracting context and facts...",
+                    "Detecting commitment changes...",
+                    "Evaluating relationship state...",
+                    "Recalculating priority score...",
+                    "Generating new recommendation..."
+                  ].map((step, i) => (
+                    <div key={i} className="flex items-center space-x-3 text-[0.88rem]" style={{ animationDelay: `${i * 600}ms` }}>
+                      <div className="w-1.5 h-1.5 rounded-full bg-[#A36A2B] animate-pulse" style={{ animationDelay: `${i * 400}ms` }} />
+                      <span className="text-[#6B655E] font-light">{step}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Change Summary Diff */}
+            {importStage === "done" && importDiff && (
+              <div className="space-y-5 animate-in fade-in slide-in-from-bottom-2 duration-300">
+                <div className="flex items-center justify-between">
+                  <p className="text-[0.72rem] uppercase tracking-wider font-semibold text-[#6B655E]">Change Summary — {importDiff.contactName}</p>
+                  <span className="text-[0.72rem] bg-[#F1ECE1] text-[#A36A2B] px-2 py-0.5 rounded font-semibold border border-[#D5CBB5]">Pipeline Complete</span>
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  {/* State */}
+                  <div className="bg-[#FCFAF6] border border-[#EBE6D9] rounded-xl p-4 space-y-2">
+                    <p className="text-[0.7rem] uppercase tracking-wider font-semibold text-[#6B655E]">Relationship State</p>
+                    <div className="flex items-center space-x-2 text-[0.88rem]">
+                      <span className="line-through text-[#9A9287]">{importDiff.before.state.replace(/_/g, " ")}</span>
+                      <ChevronRight className="w-3.5 h-3.5 text-[#A36A2B] shrink-0" />
+                      <span className={`font-semibold ${
+                        importDiff.after.state !== importDiff.before.state ? "text-[#A36A2B]" : "text-[#1D1D1B]"
+                      }`}>{importDiff.after.state.replace(/_/g, " ")}</span>
+                    </div>
+                  </div>
+
+                  {/* Priority */}
+                  <div className="bg-[#FCFAF6] border border-[#EBE6D9] rounded-xl p-4 space-y-2">
+                    <p className="text-[0.7rem] uppercase tracking-wider font-semibold text-[#6B655E]">Priority Score</p>
+                    <div className="flex items-center space-x-2 text-[0.88rem]">
+                      <span className="line-through text-[#9A9287]">{importDiff.before.priority}</span>
+                      <ChevronRight className="w-3.5 h-3.5 text-[#A36A2B] shrink-0" />
+                      <span className={`font-semibold ${
+                        importDiff.after.priority > importDiff.before.priority ? "text-[#A36A2B]" : "text-[#1D1D1B]"
+                      }`}>{importDiff.after.priority}</span>
+                    </div>
+                  </div>
+
+                  {/* Commitments */}
+                  <div className="bg-[#FCFAF6] border border-[#EBE6D9] rounded-xl p-4 space-y-2">
+                    <p className="text-[0.7rem] uppercase tracking-wider font-semibold text-[#6B655E]">Open Commitments</p>
+                    <div className="flex items-center space-x-2 text-[0.88rem]">
+                      <span className="line-through text-[#9A9287]">{importDiff.before.commitments}</span>
+                      <ChevronRight className="w-3.5 h-3.5 text-[#A36A2B] shrink-0" />
+                      <span className={`font-semibold ${
+                        importDiff.after.commitments !== importDiff.before.commitments ? "text-[#A36A2B]" : "text-[#1D1D1B]"
+                      }`}>{importDiff.after.commitments}</span>
+                    </div>
+                  </div>
+
+                  {/* Recommendation */}
+                  <div className="bg-[#FCFAF6] border border-[#EBE6D9] rounded-xl p-4 space-y-2">
+                    <p className="text-[0.7rem] uppercase tracking-wider font-semibold text-[#6B655E]">Recommendation</p>
+                    <div className="flex flex-col space-y-1 text-[0.82rem]">
+                      <span className="line-through text-[#9A9287] leading-tight">{importDiff.before.recommendation?.substring(0, 55) ?? "None"}</span>
+                      <span className={`font-semibold leading-tight ${
+                        importDiff.after.recommendation !== importDiff.before.recommendation ? "text-[#A36A2B]" : "text-[#1D1D1B]"
+                      }`}>{importDiff.after.recommendation?.substring(0, 55) ?? "None"}</span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* CTA */}
+                <div className="flex items-center space-x-3 pt-2">
+                  <button
+                    onClick={() => { setActiveTab("today"); loadAllData(importContactId); }}
+                    className="bg-[#1D1D1B] hover:bg-[#2D2B28] text-[#FCFAF6] text-[0.85rem] font-semibold px-4 py-2 rounded-lg transition-colors"
+                  >
+                    View in Today
+                  </button>
+                  <button
+                    onClick={() => { setSelectedContactId(importContactId); setActiveTab("people"); }}
+                    className="border border-[#EBE6D9] text-[#1D1D1B] text-[0.85rem] px-4 py-2 rounded-lg hover:border-[#D5CBB5] transition-colors"
+                  >
+                    Open Dossier
+                  </button>
+                  <button
+                    onClick={() => { setImportText(""); setImportDiff(null); setImportStage("idle"); }}
+                    className="text-[0.82rem] text-[#6B655E] hover:text-[#1D1D1B] ml-auto"
+                  >
+                    Import Another
+                  </button>
+                </div>
+              </div>
+            )}
+
           </div>
         )}
           </>
