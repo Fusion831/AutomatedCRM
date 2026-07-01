@@ -18,6 +18,7 @@ import {
   RefreshCw,
   Check
 } from "lucide-react";
+import { EvidenceDrawer, buildEvidence } from "../components/EvidenceDrawer";
 
 import {
   fetchAllContacts,
@@ -41,6 +42,11 @@ import {
 interface TimelineEvent {
   timeframe: string;
   description: string;
+  // evidence fields from relationship_milestones
+  evidenceQuote?: string;
+  evidenceSource?: string;
+  occurredAt?: string;
+  contactName?: string;
 }
 
 interface Contact {
@@ -59,6 +65,11 @@ interface Contact {
   objections: string[];
   timeline: TimelineEvent[];
   recommendedAction: string | null;
+  // raw evidence fields from DB for traceability
+  rawEvidenceQuote?: string;
+  rawEvidenceSource?: string;
+  rawLastInteraction?: string;
+  rawRecommendationConfidence?: number;
 }
 
 interface Commitment {
@@ -68,6 +79,9 @@ interface Commitment {
   owner: "founder" | "contact";
   dueDate: string | null;
   status: "open" | "completed";
+  // evidence for traceability
+  evidenceQuote?: string;
+  contactName?: string;
 }
 
 interface ProcessedLog {
@@ -89,6 +103,11 @@ interface StreamItem {
   timing: string;
   context: string;
   btnLabel: string;
+  // evidence for traceability
+  rawEvidenceQuote?: string;
+  rawEvidenceSource?: string;
+  rawLastInteraction?: string;
+  rawConfidence?: number;
 }
 
 function formatRelativeTime(dateStr: string | null): string {
@@ -227,8 +246,22 @@ export default function Page() {
         const contactMilestones = allMilestones.filter((m: any) => m.contact_id === c.id);
         const timeline = contactMilestones.map((m: any) => ({
           timeframe: formatRelativeTime(m.occurred_at),
-          description: m.summary
+          description: m.summary,
+          evidenceQuote: m.evidence_quote || undefined,
+          evidenceSource: m.source_type || "meeting",
+          occurredAt: m.occurred_at || undefined,
+          contactName: c.name,
         }));
+
+        // Extract raw recommendation evidence
+        const rawEvidenceArr = c.recommendation_evidence as any;
+        let rawEvidenceQuote: string | undefined;
+        if (typeof rawEvidenceArr === "string") {
+          try { const p = JSON.parse(rawEvidenceArr); rawEvidenceQuote = Array.isArray(p) ? p[0] : rawEvidenceArr; }
+          catch { rawEvidenceQuote = rawEvidenceArr; }
+        } else if (Array.isArray(rawEvidenceArr) && rawEvidenceArr.length > 0) {
+          rawEvidenceQuote = String(rawEvidenceArr[0]);
+        }
 
         return {
           id: c.id,
@@ -245,7 +278,11 @@ export default function Page() {
           drivers: drivers.length > 0 ? drivers : ["Relationship context established"],
           objections: objections,
           timeline: timeline.length > 0 ? timeline : [{ timeframe: "Initial", description: "Contact added to MemoryCRM." }],
-          recommendedAction: c.recommended_action || "No immediate action required."
+          recommendedAction: c.recommended_action || "No immediate action required.",
+          rawEvidenceQuote,
+          rawEvidenceSource: c.recommendation_category?.toLowerCase() || "meeting",
+          rawLastInteraction: c.last_interaction || undefined,
+          rawRecommendationConfidence: c.recommendation_confidence ?? undefined,
         };
       });
 
@@ -260,15 +297,21 @@ export default function Page() {
         setQuickCaptureContactId(mappedContacts[0].id);
       }
 
-      // Map commitments
-      const mappedComms: Commitment[] = dbCommitments.map(c => ({
-        id: c.id,
-        contactId: c.contact_id,
-        description: c.description,
-        owner: c.owner === "contact" ? "contact" : "founder",
-        dueDate: c.due_date ? c.due_date.substring(0, 10) : null,
-        status: c.status === "open" ? "open" : "completed"
-      }));
+      // Map commitments — also capture evidence_quote for traceability
+      const mappedComms: Commitment[] = dbCommitments.map(c => {
+        // Find the interaction this commitment came from to name the contact
+        const linkedContact = dbContacts.find((con: any) => con.id === c.contact_id);
+        return {
+          id: c.id,
+          contactId: c.contact_id,
+          description: c.description,
+          owner: c.owner === "contact" ? "contact" : "founder",
+          dueDate: c.due_date ? c.due_date.substring(0, 10) : null,
+          status: c.status === "open" ? "open" : "completed",
+          evidenceQuote: c.evidence_quote || undefined,
+          contactName: linkedContact?.name || undefined,
+        };
+      });
       setCommitments(mappedComms);
 
       // Map logs
@@ -336,6 +379,16 @@ export default function Page() {
         if (timing === "HIGH") timing = "Urgent";
         else if (timing === "CRITICAL") timing = "Immediate";
 
+        // Raw evidence for traceability
+        const rawEvidenceArr2 = c.recommendation_evidence as any;
+        let rawEvidenceQuoteStream: string | undefined;
+        if (typeof rawEvidenceArr2 === "string") {
+          try { const p = JSON.parse(rawEvidenceArr2); rawEvidenceQuoteStream = Array.isArray(p) ? p[0] : rawEvidenceArr2; }
+          catch { rawEvidenceQuoteStream = rawEvidenceArr2; }
+        } else if (Array.isArray(rawEvidenceArr2) && rawEvidenceArr2.length > 0) {
+          rawEvidenceQuoteStream = String(rawEvidenceArr2[0]);
+        }
+
         return {
           id: c.id,
           contactId: c.id,
@@ -349,7 +402,11 @@ export default function Page() {
           btnLabel: c.recommendation_category === "RESPOND" ? "Draft Response" :
                     c.recommendation_category === "SCHEDULE_MEETING" ? "Schedule Meeting" :
                     c.recommendation_category === "RESOLVE_BLOCKER" ? "Resolve Blocker" :
-                    "Draft Follow-Up"
+                    "Draft Follow-Up",
+          rawEvidenceQuote: rawEvidenceQuoteStream,
+          rawEvidenceSource: c.recommendation_category?.toLowerCase() || "meeting",
+          rawLastInteraction: c.last_interaction || undefined,
+          rawConfidence: c.recommendation_confidence ?? undefined,
         };
       });
       setStreamItems(mappedStream);
@@ -843,7 +900,20 @@ export default function Page() {
                         {isFocused && (
                           <div className="mt-3.5 space-y-3 animate-in fade-in duration-300">
                             <div className="space-y-1">
-                              <span className="text-[0.7rem] uppercase tracking-wider font-semibold text-[#A36A2B] block">Why it matters</span>
+                              <div className="flex items-center gap-2">
+                                <span className="text-[0.7rem] uppercase tracking-wider font-semibold text-[#A36A2B]">Why it matters</span>
+                                <EvidenceDrawer
+                                  label={item.action}
+                                  variant="badge"
+                                  evidence={buildEvidence({
+                                    evidenceQuote: item.rawEvidenceQuote,
+                                    sourceType: item.rawEvidenceSource,
+                                    timestamp: item.rawLastInteraction ? formatRelativeTime(item.rawLastInteraction) : "Recently",
+                                    contactName: item.person,
+                                    confidence: item.rawConfidence,
+                                  })}
+                                />
+                              </div>
                               <p className="text-[0.88rem] text-[#6B655E] leading-relaxed font-light">
                                 {item.why}
                               </p>
@@ -1034,13 +1104,24 @@ export default function Page() {
                           <div className="space-y-2">
                             {commitments.filter(c => c.contactId === selectedContact.id && c.status === "open").map(com => (
                               <div key={com.id} className="flex items-start space-x-2.5 text-[0.88rem]">
-                                <span className={`w-1.5 h-1.5 rounded-full mt-1.8 ${com.owner === "founder" ? "bg-[#A14A3A]" : "bg-[#A36A2B]"}`} />
-                                <div className="flex-1 flex justify-between">
-                                  <span className="font-light text-[#1D1D1B]">
-                                    {com.owner === "founder" ? "Awaiting your action: " : "Awaiting contact: "}
-                                    {com.description}
-                                  </span>
-                                  {com.dueDate && <span className="text-[#9A9287] text-[0.8rem] ml-4 shrink-0">Target: {com.dueDate}</span>}
+                                <span className={`w-1.5 h-1.5 rounded-full mt-1.8 shrink-0 ${com.owner === "founder" ? "bg-[#A14A3A]" : "bg-[#A36A2B]"}`} />
+                                <div className="flex-1">
+                                  <div className="flex justify-between gap-4">
+                                    <span className="font-light text-[#1D1D1B]">
+                                      {com.owner === "founder" ? "Awaiting your action: " : "Awaiting contact: "}
+                                      {com.description}
+                                    </span>
+                                    {com.dueDate && <span className="text-[#9A9287] text-[0.8rem] shrink-0">Target: {com.dueDate}</span>}
+                                  </div>
+                                  <EvidenceDrawer
+                                    label={com.description}
+                                    evidence={buildEvidence({
+                                      evidenceQuote: com.evidenceQuote,
+                                      sourceType: "meeting",
+                                      timestamp: selectedContact.lastInteraction,
+                                      contactName: selectedContact.name,
+                                    })}
+                                  />
                                 </div>
                               </div>
                             ))}
@@ -1060,6 +1141,15 @@ export default function Page() {
                             <div className="space-y-0.5">
                               <span className="text-[0.8rem] font-semibold text-[#A36A2B]">{evt.timeframe}</span>
                               <p className="text-[0.9rem] text-[#6B655E] font-light">{evt.description}</p>
+                              <EvidenceDrawer
+                                label={evt.description}
+                                evidence={buildEvidence({
+                                  evidenceQuote: evt.evidenceQuote,
+                                  sourceType: evt.evidenceSource,
+                                  timestamp: evt.timeframe,
+                                  contactName: evt.contactName,
+                                })}
+                              />
                             </div>
                           </div>
                         ))}
@@ -1068,11 +1158,21 @@ export default function Page() {
 
                     {/* Next Action */}
                     <div className="pt-4 border-t border-[#EBE6D9] flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                      <div className="space-y-1">
+                      <div className="space-y-1.5">
                         <span className="text-[0.72rem] uppercase tracking-widest font-semibold text-[#6B655E]">Suggested action</span>
                         <p className="text-[0.9rem] text-[#1D1D1B] font-medium">
                           {selectedContact.recommendedAction || "No immediate action required."}
                         </p>
+                        <EvidenceDrawer
+                          label={selectedContact.recommendedAction || "Recommendation"}
+                          evidence={buildEvidence({
+                            evidenceQuote: selectedContact.rawEvidenceQuote,
+                            sourceType: selectedContact.rawEvidenceSource,
+                            timestamp: selectedContact.lastInteraction,
+                            contactName: selectedContact.name,
+                            confidence: selectedContact.rawRecommendationConfidence,
+                          })}
+                        />
                       </div>
 
                       <div className="flex items-center space-x-2 shrink-0">
@@ -1087,18 +1187,40 @@ export default function Page() {
                     </div>
 
                     {/* Supporting Context */}
-                    <div className="space-y-2 pt-2">
+                    <div className="space-y-3 pt-2">
                       <h4 className="text-[0.72rem] uppercase tracking-widest font-semibold text-[#6B655E]">Supporting Context</h4>
-                      <div className="flex flex-wrap gap-2 text-[0.78rem]">
+                      <div className="flex flex-col gap-2">
                         {selectedContact.drivers.map((d, idx) => (
-                          <span key={idx} className="bg-[#FCFAF6] border border-[#EBE6D9] text-[#6B655E] px-2 py-0.5 rounded">
-                            Motivator: {d}
-                          </span>
+                          <div key={idx} className="flex items-center gap-2 flex-wrap">
+                            <span className="bg-[#FCFAF6] border border-[#EBE6D9] text-[#6B655E] px-2 py-0.5 rounded text-[0.78rem]">
+                              Motivator: {d}
+                            </span>
+                            <EvidenceDrawer
+                              label={`Motivator: ${d}`}
+                              evidence={buildEvidence({
+                                evidenceQuote: selectedContact.rawEvidenceQuote || d,
+                                sourceType: selectedContact.rawEvidenceSource || "meeting",
+                                timestamp: selectedContact.lastInteraction,
+                                contactName: selectedContact.name,
+                              })}
+                            />
+                          </div>
                         ))}
                         {selectedContact.objections.map((o, idx) => (
-                          <span key={idx} className="bg-[#FCFAF6] border border-[#EBE6D9] text-[#A14A3A] px-2 py-0.5 rounded">
-                            Objection: {o}
-                          </span>
+                          <div key={idx} className="flex items-center gap-2 flex-wrap">
+                            <span className="bg-[#FCFAF6] border border-[#EBE6D9] text-[#A14A3A] px-2 py-0.5 rounded text-[0.78rem]">
+                              Objection: {o}
+                            </span>
+                            <EvidenceDrawer
+                              label={`Objection: ${o}`}
+                              evidence={buildEvidence({
+                                evidenceQuote: o,
+                                sourceType: selectedContact.rawEvidenceSource || "meeting",
+                                timestamp: selectedContact.lastInteraction,
+                                contactName: selectedContact.name,
+                              })}
+                            />
+                          </div>
                         ))}
                       </div>
                     </div>
