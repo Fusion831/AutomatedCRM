@@ -45,4 +45,10 @@
 body {
   background-color: #FAF9F6;
   color: #1C1B19;
+  font-feature-settings: "cv02", "cv03", "cv04", "cv11";
+}
+
+/* Remove default focus outlines to maintain a clean editorial feel */
+input:focus, textarea:focus {
+  outline: none;
 }

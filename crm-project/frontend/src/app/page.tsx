@@ -4,25 +4,19 @@ import React, { useState, useEffect } from "react";
 import {
   Sparkles,
   Inbox,
-  Users,
   Mail,
-  RefreshCw,
   Plus,
   Search,
   CheckCircle2,
   Clock,
-  ArrowRight,
   Send,
-  Trash2,
   X,
   FileText,
-  User,
-  AlertCircle,
-  Check,
   Calendar,
-  ChevronRight,
   Sliders,
-  Maximize2
+  ChevronRight,
+  RefreshCw,
+  Check
 } from "lucide-react";
 
 // ============================================================================
@@ -34,7 +28,7 @@ interface Contact {
   name: string;
   company: string;
   email: string;
-  temperature: "Active" | "Cooling" | "Cold" | "Reviving";
+  temperature: "Active" | "Cooling down" | "Cold" | "Reviving";
   state: string; // waiting_on_me, waiting_on_them, mutual_exploration
   lastInteraction: string;
   priorityScore: number;
@@ -62,7 +56,7 @@ interface ProcessedLog {
 }
 
 // ============================================================================
-// HIGH-FIDELITY MOCK DATABASES
+// HIGH-FIDELITY MOCK DATABASES (REWRITTEN WITH HUMAN COPY)
 // ============================================================================
 
 const INITIAL_CONTACTS: Contact[] = [
@@ -76,9 +70,8 @@ const INITIAL_CONTACTS: Contact[] = [
     lastInteraction: "Tuesday, 2:15 PM",
     priorityScore: 85,
     priorityReasons: [
-      "+50: Overdue promise to contact (confidence >= 70%)",
-      "+20: Attention state is 'Waiting on Me'",
-      "Applied Relationship Tier A multiplier (x1.5)"
+      "Overdue promise to send the pricing deck.",
+      "Awaiting your reply."
     ],
     summary: "VP Engineering. Evaluating observability tool integration to replace Datadog.",
     thesis: "Rahul is a highly technical decision-maker focused on migration overhead. Latency validation cleared initial objection; waiting on pricing proposal.",
@@ -95,8 +88,7 @@ const INITIAL_CONTACTS: Contact[] = [
     lastInteraction: "Yesterday, 11:30 AM",
     priorityScore: 78,
     priorityReasons: [
-      "+30: Promise due to contact within 48 hours",
-      "Applied Relationship Tier A multiplier (x1.5)"
+      "Promise due to send financial models and projections."
     ],
     summary: "CEO & Founder. Seeking technical advisory and lead investment round.",
     thesis: "Sarah has a strong NLP track record. High conviction on product velocity; waiting to send financial model and CAC projections.",
@@ -108,13 +100,12 @@ const INITIAL_CONTACTS: Contact[] = [
     name: "Marcus Aurelius",
     company: "Rome Ventures",
     email: "marcus@romeventures.vc",
-    temperature: "Cooling",
+    temperature: "Cooling down",
     state: "waiting_on_them",
     lastInteraction: "16 days ago",
     priorityScore: 40,
     priorityReasons: [
-      "+15: Active relationship with no touch for 14+ days",
-      "Applied Relationship Tier B multiplier (x1.0)"
+      "Active relationship with no touch for 14+ days."
     ],
     summary: "Managing Partner. Focuses on developer tools and Series A growth rounds.",
     thesis: "Marcus is conservative on team expansion pace. Shared Head of Sales job description to warm relationship for upcoming Series A.",
@@ -131,8 +122,7 @@ const INITIAL_CONTACTS: Contact[] = [
     lastInteraction: "3 days ago",
     priorityScore: 65,
     priorityReasons: [
-      "+20: High momentum relationship reviving",
-      "Applied Relationship Tier A multiplier (x1.5)"
+      "High momentum relationship. Awaiting security review."
     ],
     summary: "Director of Security. Validating identity sync architectures.",
     thesis: "Elena represents a strategic enterprise partner. Demo went exceptionally well. Awaiting introduction to VP of Infrastructure.",
@@ -183,14 +173,14 @@ const INITIAL_LOGS: ProcessedLog[] = [
 ];
 
 export default function Page() {
-  // Navigation State
-  const [activeTab, setActiveTab] = useState<"today" | "relationships" | "followups" | "updates">("today");
+  // Navigation State (Editorial tabs)
+  const [activeTab, setActiveTab] = useState<"today" | "people" | "inbox">("today");
 
   // Core State
   const [contacts, setContacts] = useState<Contact[]>(INITIAL_CONTACTS);
   const [commitments, setCommitments] = useState<Commitment[]>(INITIAL_COMMITMENTS);
   const [logs, setLogs] = useState<ProcessedLog[]>(INITIAL_LOGS);
-  const [lastVisitedAt, setLastVisitedAt] = useState<string>("Yesterday, 4:30 PM");
+  const [lastVisitedAt, setLastVisitedAt] = useState<string>("yesterday at 4:30 PM");
 
   // Search state
   const [searchQuery, setSearchQuery] = useState("");
@@ -208,32 +198,13 @@ export default function Page() {
   } | null>(null);
   const [closureMessage, setClosureMessage] = useState<string | null>(null);
 
-  // Simulated live processing interval
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      // Add a simulated running ingestion log
-      setLogs((prev) => [
-        {
-          id: "l4",
-          type: "calendar",
-          source: "Calendar Sync Service",
-          timestamp: "Just now",
-          status: "completed",
-        },
-        ...prev,
-      ]);
-    }, 12000);
-    return () => clearTimeout(timer);
-  }, []);
-
-  // Quick Capture processing handler
+  // Quick Capture submission
   const handleQuickCaptureSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!quickCaptureText.trim()) return;
 
     setIsProcessingCapture(true);
 
-    // Simulate Consolidated Extractor execution on local stack
     setTimeout(() => {
       const newContact: Contact = {
         id: "tom-henderson",
@@ -244,7 +215,7 @@ export default function Page() {
         state: "mutual_exploration",
         lastInteraction: "Just now",
         priorityScore: 50,
-        priorityReasons: ["+30: New manual note interaction ingested", "Tier C multiplier (x0.8)"],
+        priorityReasons: ["Casual coffee notes parsed."],
         summary: "Investment Associate. Met at Blue Bottle Coffee for relationship building.",
         thesis: "Tom recently moved from NY to SF. Focuses on dev tools. Casually staying in touch.",
         drivers: ["Developer tools", "Database infrastructure"],
@@ -256,7 +227,7 @@ export default function Page() {
         {
           id: `l-capture-${Date.now()}`,
           type: "zoom",
-          source: "Quick Capture Note",
+          source: "Pasted note",
           timestamp: "Just now",
           status: "completed"
         },
@@ -267,10 +238,9 @@ export default function Page() {
       setQuickCaptureText("");
       setIsQuickCaptureOpen(false);
 
-      // Trigger temporary success notification
-      setClosureMessage("Manual note processed. Tom Henderson added to Relationships!");
+      setClosureMessage("✓ Note parsed. Tom Henderson added to your relationships.");
       setTimeout(() => setClosureMessage(null), 4000);
-    }, 2000);
+    }, 1500);
   };
 
   // Compose Trigger
@@ -286,34 +256,33 @@ export default function Page() {
 
     setActiveDraft({
       contact,
-      subject: `MemoryCRM Follow-up — ${contact.company}`,
+      subject: `Follow up — ${contact.company}`,
       body: draftBody
     });
   };
 
-  // Submit Draft (Closure mechanism)
+  // Send Draft (Closure feedback loop)
   const handleSendDraft = () => {
     if (!activeDraft) return;
 
     const contactId = activeDraft.contact.id;
 
-    // Trigger visual closure transition
+    // Shifting state and updating temperature
     setContacts((prev) =>
       prev.map((c) => {
         if (c.id === contactId) {
-          // Shifting state: waiting_on_me -> waiting_on_them
           return {
             ...c,
             state: "waiting_on_them",
             temperature: "Reviving",
-            lastInteraction: "Today (Follow-up Sent)"
+            lastInteraction: "Today (Follow-up sent)"
           };
         }
         return c;
       })
     );
 
-    // Resolve any open founder commitments for this contact
+    // Mark outstanding founder commitments resolved
     setCommitments((prev) =>
       prev.map((com) => {
         if (com.status === "open" && com.owner === "founder") {
@@ -323,86 +292,67 @@ export default function Page() {
       })
     );
 
-    // Trigger Closure feedback message
-    setClosureMessage(`✓ Follow-up dispatched to ${activeDraft.contact.name}. State shifted to "Waiting on Them".`);
+    setClosureMessage(`✓ Email dispatched. Rahul's status updated.`);
     setActiveDraft(null);
 
-    // Fade out notification
     setTimeout(() => {
       setClosureMessage(null);
-    }, 4500);
+    }, 4000);
   };
 
   return (
-    <div className="min-h-screen bg-[#FAF9F6] text-[#1C1B19] font-sans antialiased flex flex-col relative pb-16">
+    <div className="min-h-screen bg-[#FAF9F6] text-[#1C1B19] font-sans antialiased flex flex-col relative pb-24">
       
       {/* =========================================================================
-          APPLICATION SHELL / TOP NAVIGATION
+          APPLICATION SHELL / TOP NAVIGATION (REFINED)
           ========================================================================= */}
-      <header className="sticky top-0 z-40 bg-[#FAF9F6]/80 backdrop-blur-md border-b border-[#E2DDD3] px-6 py-4">
-        <div className="max-w-6xl mx-auto flex items-center justify-between">
-          <div className="flex items-center space-x-3">
-            <div className="w-8 h-8 rounded-lg bg-[#EBE8DF] border border-[#C8BFB0] flex items-center justify-center">
-              <Sparkles className="w-4 h-4 text-[#8C6239]" />
-            </div>
-            <div>
-              <h1 className="font-display font-semibold text-[1.1rem] tracking-tight">MemoryCRM</h1>
-              <p className="text-[0.7rem] text-[#8E877E] tracking-wider uppercase font-semibold">Relationship Memory OS</p>
-            </div>
+      <header className="sticky top-0 z-40 bg-[#FAF9F6]/95 backdrop-blur-xs px-8 py-5">
+        <div className="max-w-4xl mx-auto flex items-center justify-between border-b border-[#E2DDD3]/40 pb-4">
+          <div className="flex items-baseline space-x-2">
+            <span className="font-display font-medium text-[1.05rem] tracking-tight">MemoryCRM</span>
+            <span className="text-[0.78rem] text-[#8E877E] font-light">for your relationships</span>
           </div>
 
-          <nav className="flex items-center space-x-1">
+          <nav className="flex items-center space-x-6">
             <button
               onClick={() => setActiveTab("today")}
-              className={`px-4 py-1.5 rounded-md text-[0.9rem] font-medium transition-all duration-200 ${
+              className={`text-[0.9rem] transition-colors relative py-1 ${
                 activeTab === "today"
-                  ? "bg-[#EBE8DF] text-[#1C1B19] font-semibold"
-                  : "text-[#5C5852] hover:text-[#1C1B19] hover:bg-[#F3F1EB]"
+                  ? "text-[#1C1B19] font-medium border-b border-[#1C1B19]"
+                  : "text-[#8E877E] hover:text-[#1C1B19]"
               }`}
             >
               Today
             </button>
             <button
-              onClick={() => setActiveTab("relationships")}
-              className={`px-4 py-1.5 rounded-md text-[0.9rem] font-medium transition-all duration-200 ${
-                activeTab === "relationships"
-                  ? "bg-[#EBE8DF] text-[#1C1B19] font-semibold"
-                  : "text-[#5C5852] hover:text-[#1C1B19] hover:bg-[#F3F1EB]"
+              onClick={() => setActiveTab("people")}
+              className={`text-[0.9rem] transition-colors relative py-1 ${
+                activeTab === "people"
+                  ? "text-[#1C1B19] font-medium border-b border-[#1C1B19]"
+                  : "text-[#8E877E] hover:text-[#1C1B19]"
               }`}
             >
-              Relationships
+              People
             </button>
             <button
-              onClick={() => setActiveTab("followups")}
-              className={`px-4 py-1.5 rounded-md text-[0.9rem] font-medium transition-all duration-200 ${
-                activeTab === "followups"
-                  ? "bg-[#EBE8DF] text-[#1C1B19] font-semibold"
-                  : "text-[#5C5852] hover:text-[#1C1B19] hover:bg-[#F3F1EB]"
+              onClick={() => setActiveTab("inbox")}
+              className={`text-[0.9rem] transition-colors relative py-1 ${
+                activeTab === "inbox"
+                  ? "text-[#1C1B19] font-medium border-b border-[#1C1B19]"
+                  : "text-[#8E877E] hover:text-[#1C1B19]"
               }`}
             >
-              Follow-Ups
-            </button>
-            <button
-              onClick={() => setActiveTab("updates")}
-              className={`px-4 py-1.5 rounded-md text-[0.9rem] font-medium transition-all duration-200 ${
-                activeTab === "updates"
-                  ? "bg-[#EBE8DF] text-[#1C1B19] font-semibold"
-                  : "text-[#5C5852] hover:text-[#1C1B19] hover:bg-[#F3F1EB]"
-              }`}
-            >
-              Updates
+              Inbox
             </button>
           </nav>
 
-          <div className="flex items-center space-x-3">
-            <button
-              onClick={() => setIsQuickCaptureOpen(true)}
-              className="bg-[#1C1B19] hover:bg-[#2D2B28] text-[#FAF9F6] text-[0.85rem] font-medium px-3.5 py-1.8 rounded-md transition-all flex items-center space-x-1.5 shadow-sm"
-            >
-              <Plus className="w-3.5 h-3.5" />
-              <span>Quick Capture</span>
-            </button>
-          </div>
+          <button
+            onClick={() => setIsQuickCaptureOpen(true)}
+            className="text-[#8C6239] hover:text-[#1C1B19] text-[0.88rem] font-medium transition-colors flex items-center space-x-1"
+          >
+            <Plus className="w-3.5 h-3.5" />
+            <span>Add Conversation</span>
+          </button>
         </div>
       </header>
 
@@ -410,308 +360,179 @@ export default function Page() {
           CLOSURE NOTIFICATION POPUP
           ========================================================================= */}
       {closureMessage && (
-        <div className="fixed top-24 left-1/2 -translate-x-1/2 z-50 bg-[#EBE8DF] border border-[#C8BFB0] text-[#1C1B19] px-4 py-2.5 rounded-lg shadow-lg flex items-center space-x-2 text-[0.9rem] animate-in fade-in slide-in-from-top-4 duration-300">
-          <CheckCircle2 className="w-4.5 h-4.5 text-[#8C6239]" />
-          <span className="font-medium">{closureMessage}</span>
+        <div className="fixed top-24 left-1/2 -translate-x-1/2 z-50 bg-[#F3F1EB] border border-[#C8BFB0] text-[#1C1B19] px-4 py-2.5 rounded-lg shadow-sm flex items-center space-x-2 text-[0.88rem] animate-in fade-in slide-in-from-top-2 duration-200">
+          <Check className="w-4 h-4 text-[#8C6239]" />
+          <span>{closureMessage}</span>
         </div>
       )}
 
       {/* =========================================================================
-          MAIN VIEWPONT CONTAINER
+          MAIN PORT (RESTRUCTURED AND CLEAN)
           ========================================================================= */}
-      <main className="flex-1 max-w-6xl w-full mx-auto px-6 py-8">
+      <main className="flex-1 max-w-4xl w-full mx-auto px-8 py-10">
         
         {/* =====================================================================
-            TODAY VIEW (DEFAULT LANDING SCREEN)
+            TODAY VIEW (EDITORIAL MORNING BRIEFING)
             ===================================================================== */}
         {activeTab === "today" && (
-          <div className="space-y-12 animate-in fade-in duration-300">
+          <div className="space-y-16 animate-in fade-in duration-200">
             
-            {/* Morning Brief Section */}
-            <section className="space-y-4">
-              <h2 className="font-display text-[2.2rem] font-medium tracking-tight text-[#1C1B19] leading-tight">
+            {/* Morning Briefing Section */}
+            <section className="space-y-6">
+              <h2 className="font-display text-[2.6rem] font-medium tracking-tight text-[#1C1B19] leading-tight">
                 Good morning, Daksh.
               </h2>
-              <div className="space-y-1.5 text-[1.1rem] text-[#5C5852] font-light max-w-2xl border-l border-[#E2DDD3] pl-4">
-                <p>Since your last visit ({lastVisitedAt}):</p>
-                <ul className="space-y-1 mt-2 text-[#1C1B19] font-normal">
-                  <li className="flex items-center space-x-2">
-                    <span className="w-1.5 h-1.5 rounded-full bg-[#8C6239]"></span>
-                    <span>2 relationships entered <span className="font-semibold text-[#8C6239]">cooling</span></span>
-                  </li>
-                  <li className="flex items-center space-x-2">
-                    <span className="w-1.5 h-1.5 rounded-full bg-[#A73F2D]"></span>
-                    <span>1 commitment became <span className="font-semibold text-[#A73F2D]">overdue</span></span>
-                  </li>
-                  <li className="flex items-center space-x-2">
-                    <span className="w-1.5 h-1.5 rounded-full bg-[#C5A059]"></span>
-                    <span>3 follow-up recommendations were generated</span>
-                  </li>
-                </ul>
+              <div className="space-y-2 text-[1.1rem] text-[#5C5852] font-light max-w-2xl">
+                <p>Since you checked in yesterday:</p>
+                <div className="space-y-1 pl-4 border-l border-[#E2DDD3] mt-3">
+                  <p className="flex items-center space-x-2 text-[#1C1B19]">
+                    <span className="w-1.5 h-1.5 rounded-full bg-[#8C6239]" />
+                    <span>2 relationships are <span className="text-[#8C6239] font-medium">cooling down</span></span>
+                  </p>
+                  <p className="flex items-center space-x-2 text-[#1C1B19]">
+                    <span className="w-1.5 h-1.5 rounded-full bg-[#8C6239]" />
+                    <span>1 commitment became <span className="text-[#8C6239] font-medium">overdue</span></span>
+                  </p>
+                  <p className="flex items-center space-x-2 text-[#1C1B19]">
+                    <span className="w-1.5 h-1.5 rounded-full bg-[#8C6239]" />
+                    <span>3 new actions have been suggested</span>
+                  </p>
+                </div>
               </div>
             </section>
 
-            {/* Grid Layout for Critical Attention + Recommended Actions */}
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-start">
+            {/* Split layout: Needs Attention (Left) and Your Next Step (Right) */}
+            <div className="grid grid-cols-1 md:grid-cols-5 gap-12 items-start">
               
-              {/* Left & Middle Column (2/3): Critical Attention & Feed */}
-              <div className="lg:col-span-2 space-y-10">
-                
-                {/* Critical Attention Screen Section */}
-                <section className="space-y-4">
-                  <div className="flex items-center justify-between border-b border-[#E2DDD3] pb-2">
-                    <h3 className="text-[0.8rem] tracking-wider uppercase font-semibold text-[#8E877E] flex items-center space-x-1.5">
-                      <Clock className="w-3.5 h-3.5" />
-                      <span>Critical Attention</span>
-                    </h3>
-                  </div>
-                  
-                  <div className="space-y-3.5">
-                    {contacts.filter(c => c.state === "waiting_on_me").map(contact => (
-                      <div
-                        key={contact.id}
-                        className="group bg-[#F3F1EB] hover:bg-[#EBE8DF]/50 border border-[#E2DDD3] rounded-xl p-5 transition-all duration-200 shadow-sm"
-                      >
-                        <div className="flex items-start justify-between">
-                          <div>
-                            <div className="flex items-center space-x-2">
-                              <h4 className="font-display font-medium text-[1.1rem] text-[#1C1B19] group-hover:text-[#8C6239] transition-colors">{contact.name}</h4>
-                              <span className="text-[0.85rem] text-[#8E877E]">•</span>
-                              <span className="text-[0.9rem] text-[#5C5852] font-medium">{contact.company}</span>
-                            </div>
-                            <p className="text-[0.9rem] text-[#5C5852] mt-1.5 line-clamp-1">{contact.summary}</p>
-                          </div>
+              {/* Needs Attention Column (3/5) - Borderless rows */}
+              <div className="md:col-span-3 space-y-8">
+                <div className="border-b border-[#E2DDD3]/40 pb-2">
+                  <h3 className="text-[0.78rem] tracking-wider uppercase font-semibold text-[#8E877E]">
+                    Needs Attention
+                  </h3>
+                </div>
 
-                          <div className="flex items-center space-x-2">
-                            <span className={`text-[0.75rem] font-semibold px-2 py-0.5 rounded-full border ${
-                              contact.temperature === "Active" ? "bg-[#FAF9F6] border-[#C5A059] text-[#8C6239]" :
-                              contact.temperature === "Cooling" ? "bg-[#FAF9F6] border-[#E2DDD3] text-[#8E877E]" :
-                              "bg-[#FAF9F6] border-[#D4AF37] text-[#D4AF37]"
-                            }`}>
-                              {contact.temperature}
-                            </span>
-                          </div>
+                <div className="space-y-8">
+                  {contacts.filter(c => c.state === "waiting_on_me").map(contact => (
+                    <div key={contact.id} className="space-y-2">
+                      <div className="flex items-baseline justify-between">
+                        <div className="flex items-baseline space-x-2">
+                          <h4 className="font-display font-medium text-[1.15rem] text-[#1C1B19]">{contact.name}</h4>
+                          <span className="text-[0.8rem] text-[#8E877E]">{contact.company}</span>
                         </div>
-
-                        {/* Action section inside Card */}
-                        <div className="mt-4 pt-3.5 border-t border-[#E2DDD3]/60 flex items-center justify-between">
-                          <span className="text-[0.85rem] text-[#8C6239] font-medium flex items-center space-x-1">
-                            <span>Suggest:</span>
-                            <span className="text-[#1C1B19] font-normal underline">
-                              {contact.id === "rahul-sharma" ? "Send pricing proposal" : "Send projections & model"}
-                            </span>
-                          </span>
-                          
-                          <div className="flex items-center space-x-2">
-                            <button 
-                              onClick={() => {
-                                setActiveTab("relationships");
-                                setSearchQuery(contact.name);
-                              }}
-                              className="text-[0.8rem] font-medium text-[#5C5852] hover:text-[#1C1B19] px-2.5 py-1 rounded"
-                            >
-                              View Relationship
-                            </button>
-                            <button
-                              onClick={() => handleTriggerComposer(contact)}
-                              className="text-[0.8rem] font-medium bg-[#1C1B19] hover:bg-[#2D2B28] text-[#FAF9F6] px-3 py-1 rounded transition-colors flex items-center space-x-1"
-                            >
-                              <Mail className="w-3 h-3" />
-                              <span>Draft Follow-Up</span>
-                            </button>
-                          </div>
-                        </div>
+                        <span className="text-[0.75rem] text-[#8C6239] font-medium bg-[#F3F1EB] px-2 py-0.5 rounded">
+                          {contact.temperature}
+                        </span>
                       </div>
-                    ))}
-                  </div>
-                </section>
 
-                {/* Relationship Feed Section */}
-                <section className="space-y-4">
-                  <div className="flex items-center justify-between border-b border-[#E2DDD3] pb-2">
-                    <h3 className="text-[0.8rem] tracking-wider uppercase font-semibold text-[#8E877E] flex items-center space-x-1.5">
-                      <Sliders className="w-3.5 h-3.5" />
-                      <span>Relationship Feed</span>
-                    </h3>
-                  </div>
+                      <p className="text-[0.92rem] text-[#5C5852] leading-relaxed font-light">
+                        {contact.summary}
+                      </p>
 
-                  <div className="bg-[#F3F1EB] border border-[#E2DDD3] rounded-xl overflow-hidden shadow-sm">
-                    <div className="divide-y divide-[#E2DDD3]">
-                      {contacts.map((contact) => (
-                        <div
-                          key={contact.id}
-                          className="p-4 hover:bg-[#EBE8DF]/40 transition-all flex items-center justify-between"
+                      <div className="flex items-center space-x-4 pt-1 text-[0.82rem]">
+                        <span className="text-[#8E877E]">Suggested action:</span>
+                        <button
+                          onClick={() => handleTriggerComposer(contact)}
+                          className="text-[#8C6239] hover:text-[#1C1B19] font-medium underline underline-offset-2 transition-all"
                         >
-                          <div className="flex items-center space-x-4">
-                            <div className="w-9 h-9 rounded-full bg-[#FAF9F6] border border-[#E2DDD3] flex items-center justify-center font-display font-medium text-[0.95rem] text-[#8C6239]">
-                              {contact.name.split(" ").map(n => n[0]).join("")}
-                            </div>
-                            <div>
-                              <h4 className="font-medium text-[0.95rem]">{contact.name}</h4>
-                              <p className="text-[0.8rem] text-[#8E877E]">{contact.company} • Last sync: {contact.lastInteraction}</p>
-                            </div>
-                          </div>
-
-                          <div className="flex items-center space-x-3">
-                            <span className="text-[0.8rem] text-[#5C5852] capitalize">
-                              {contact.state.replace(/_/g, " ")}
-                            </span>
-                            <div className="flex items-center space-x-1 bg-[#FAF9F6] border border-[#E2DDD3] px-2 py-0.5 rounded text-[0.8rem] font-semibold">
-                              <span>Priority:</span>
-                              <span className="text-[#8C6239]">{contact.priorityScore}</span>
-                            </div>
-                          </div>
-                        </div>
-                      ))}
+                          Draft Follow-Up
+                        </button>
+                        <span className="text-[#E2DDD3]">•</span>
+                        <button 
+                          onClick={() => {
+                            setActiveTab("people");
+                            setSearchQuery(contact.name);
+                          }}
+                          className="text-[#8E877E] hover:text-[#1C1B19]"
+                        >
+                          View History
+                        </button>
+                      </div>
                     </div>
-                  </div>
-                </section>
+                  ))}
+                </div>
               </div>
 
-              {/* Right Column (1/3): Highlighted Action & Processing Center */}
-              <div className="space-y-10">
-                
-                {/* Single Highlighted Recommendation Section */}
-                <section className="space-y-4">
-                  <h3 className="text-[0.8rem] tracking-wider uppercase font-semibold text-[#8E877E] border-b border-[#E2DDD3] pb-2 flex items-center space-x-1.5">
-                    <Sparkles className="w-3.5 h-3.5 text-[#C5A059]" />
-                    <span>Focus Objective</span>
+              {/* Your Next Step Column (2/5) - Highlights action borderless */}
+              <div className="md:col-span-2 space-y-6">
+                <div className="border-b border-[#E2DDD3]/40 pb-2">
+                  <h3 className="text-[0.78rem] tracking-wider uppercase font-semibold text-[#8E877E]">
+                    Your Next Step
                   </h3>
-                  
-                  <div className="bg-gradient-to-br from-[#F3F1EB] to-[#EBE8DF]/50 border-2 border-[#C5A059]/40 rounded-xl p-5 shadow-sm space-y-4">
-                    <div>
-                      <span className="text-[0.7rem] uppercase tracking-wider font-semibold text-[#8C6239]">Highest ROI Recommendation</span>
-                      <h4 className="font-display font-medium text-[1.2rem] text-[#1C1B19] mt-1.5 leading-snug">
-                        Send pricing proposal to Rahul Sharma.
-                      </h4>
-                    </div>
+                </div>
 
-                    <div className="space-y-2 text-[0.85rem] text-[#5C5852] bg-[#FAF9F6] p-3 rounded-lg border border-[#E2DDD3]/80">
-                      <p className="font-semibold text-[#1C1B19]">Reasoning:</p>
-                      <ul className="list-disc list-inside space-y-1 font-light">
-                        <li>Requested 5 days ago in Zoom Call.</li>
-                        <li>Open loop: promise outstanding on founder.</li>
-                      </ul>
-                    </div>
-
-                    <div className="flex items-center space-x-2 pt-1">
-                      <button
-                        onClick={() => {
-                          setActiveTab("relationships");
-                          setSearchQuery("Rahul");
-                        }}
-                        className="flex-1 text-[0.85rem] font-medium border border-[#C8BFB0] hover:bg-[#EBE8DF]/40 text-[#1C1B19] py-1.5 rounded-md transition-colors"
-                      >
-                        View Context
-                      </button>
-                      <button
-                        onClick={() => handleTriggerComposer(contacts[0])}
-                        className="flex-1 text-[0.85rem] font-medium bg-[#1C1B19] hover:bg-[#2D2B28] text-[#FAF9F6] py-1.5 rounded-md transition-colors flex items-center justify-center space-x-1 shadow-sm"
-                      >
-                        <Mail className="w-3.5 h-3.5" />
-                        <span>Draft Email</span>
-                      </button>
-                    </div>
+                <div className="space-y-4">
+                  <div className="space-y-2">
+                    <span className="text-[0.7rem] uppercase tracking-wider font-semibold text-[#8C6239] block">Immediate priority</span>
+                    <h4 className="font-display font-medium text-[1.3rem] text-[#1C1B19] leading-snug">
+                      Send pricing proposal to Rahul Sharma.
+                    </h4>
                   </div>
-                </section>
 
-                {/* Processing Center Section */}
-                <section className="space-y-4">
-                  <h3 className="text-[0.8rem] tracking-wider uppercase font-semibold text-[#8E877E] border-b border-[#E2DDD3] pb-2 flex items-center space-x-1.5">
-                    <RefreshCw className="w-3.5 h-3.5" />
-                    <span>Processing Center</span>
-                  </h3>
-                  
-                  <div className="bg-[#F3F1EB] border border-[#E2DDD3] rounded-xl p-4.5 space-y-4 shadow-sm">
-                    {/* Active Connections */}
-                    <div className="grid grid-cols-3 gap-2">
-                      <div className="bg-[#FAF9F6] border border-[#E2DDD3] p-2.5 rounded-lg text-center">
-                        <span className="block text-[0.7rem] uppercase tracking-wider font-semibold text-[#8E877E]">Gmail</span>
-                        <span className="inline-flex items-center mt-1 text-[0.75rem] text-[#8C6239] font-medium">
-                          <span className="w-1.5 h-1.5 rounded-full bg-[#8C6239] mr-1.5"></span>
-                          Connected
-                        </span>
-                      </div>
-                      <div className="bg-[#FAF9F6] border border-[#E2DDD3] p-2.5 rounded-lg text-center">
-                        <span className="block text-[0.7rem] uppercase tracking-wider font-semibold text-[#8E877E]">Zoom</span>
-                        <span className="inline-flex items-center mt-1 text-[0.75rem] text-[#8C6239] font-medium">
-                          <span className="w-1.5 h-1.5 rounded-full bg-[#8C6239] mr-1.5"></span>
-                          Connected
-                        </span>
-                      </div>
-                      <div className="bg-[#FAF9F6] border border-[#E2DDD3] p-2.5 rounded-lg text-center">
-                        <span className="block text-[0.7rem] uppercase tracking-wider font-semibold text-[#8E877E]">Calendar</span>
-                        <span className="inline-flex items-center mt-1 text-[0.75rem] text-[#8C6239] font-medium">
-                          <span className="w-1.5 h-1.5 rounded-full bg-[#8C6239] mr-1.5"></span>
-                          Synced
-                        </span>
-                      </div>
-                    </div>
+                  <p className="text-[0.88rem] text-[#5C5852] leading-relaxed font-light">
+                    Rahul requested this during your Zoom call 5 days ago. You promised to send the pricing deck by Friday.
+                  </p>
 
-                    {/* Recently Processed Log */}
-                    <div className="space-y-3">
-                      <span className="text-[0.75rem] font-semibold text-[#8E877E] uppercase tracking-wider block">Recently Ingested</span>
-                      
-                      <div className="space-y-2">
-                        {logs.slice(0, 4).map((log) => (
-                          <div
-                            key={log.id}
-                            className="bg-[#FAF9F6] border border-[#E2DDD3] rounded-lg p-2.5 flex items-center justify-between text-[0.8rem]"
-                          >
-                            <div className="flex items-center space-x-2">
-                              {log.type === "email" && <Mail className="w-3.5 h-3.5 text-[#8C6239]" />}
-                              {log.type === "zoom" && <FileText className="w-3.5 h-3.5 text-[#C5A059]" />}
-                              {log.type === "slack" && <Inbox className="w-3.5 h-3.5 text-[#8C6239]" />}
-                              {log.type === "calendar" && <Calendar className="w-3.5 h-3.5 text-[#C5A059]" />}
-                              
-                              <span className="font-medium text-[#1C1B19] truncate max-w-[120px]">
-                                {log.source}
-                              </span>
-                            </div>
-                            <span className="text-[0.75rem] text-[#8E877E]">
-                              {log.timestamp}
-                            </span>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  </div>
-                </section>
+                  <button
+                    onClick={() => handleTriggerComposer(contacts[0])}
+                    className="w-full bg-[#1C1B19] hover:bg-[#2D2B28] text-[#FAF9F6] text-[0.85rem] font-semibold py-2 rounded-md transition-colors flex items-center justify-center space-x-2"
+                  >
+                    <Mail className="w-4.5 h-4.5" />
+                    <span>Draft Email</span>
+                  </button>
+                </div>
               </div>
 
             </div>
+
+            {/* Sync & Activity Logs (Passive layout at bottom) */}
+            <section className="pt-10 border-t border-[#E2DDD3]/40 space-y-4 text-[0.85rem] text-[#5C5852]">
+              <div className="flex items-center justify-between text-[#8E877E] font-medium text-[0.78rem] uppercase tracking-wider">
+                <span>Sync Status</span>
+                <span>Google & Zoom Synced</span>
+              </div>
+              <div className="space-y-2">
+                {logs.slice(0, 3).map((log) => (
+                  <p key={log.id} className="flex justify-between items-baseline font-light">
+                    <span>✓ Processed {log.type} transcript with {log.source}</span>
+                    <span className="text-[#8E877E] text-[0.8rem]">{log.timestamp}</span>
+                  </p>
+                ))}
+              </div>
+            </section>
+
           </div>
         )}
 
         {/* =====================================================================
-            RELATIONSHIPS VIEW (SEARCH-FIRST SCREEN)
+            PEOPLE VIEW (STORY-DRIVEN RELATIONSHIPS LIST)
             ===================================================================== */}
-        {activeTab === "relationships" && (
-          <div className="space-y-8 animate-in fade-in duration-300">
-            <div className="space-y-2">
-              <h2 className="font-display text-[1.8rem] font-semibold tracking-tight">Relationship Memory</h2>
-              <p className="text-[#5C5852] text-[0.95rem]">Search facts, drivers, objectives, and objections across all stakeholders.</p>
+        {activeTab === "people" && (
+          <div className="space-y-10 animate-in fade-in duration-200">
+            <div className="space-y-1">
+              <h2 className="font-display text-[1.8rem] font-semibold tracking-tight">People</h2>
+              <p className="text-[#5C5852] text-[0.9rem] font-light">Explore relationship history, objectives, and concerns.</p>
             </div>
 
-            {/* Elevated Search Bar */}
-            <div className="relative max-w-2xl bg-[#F3F1EB] rounded-xl border border-[#E2DDD3] shadow-sm flex items-center px-4 py-3">
-              <Search className="w-5 h-5 text-[#8E877E] mr-3" />
+            {/* Minimal Search Bar */}
+            <div className="flex items-center border-b border-[#E2DDD3] py-2 max-w-lg">
+              <Search className="w-4.5 h-4.5 text-[#8E877E] mr-3" />
               <input
                 type="text"
-                placeholder="Search name, company, drivers ('SOC2'), objections ('migration')..."
+                placeholder="Search names, drivers ('latency'), objections ('SOC2')..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full bg-transparent border-none text-[#1C1B19] placeholder-[#8E877E] focus:outline-none text-[0.95rem]"
+                className="w-full bg-transparent border-none text-[#1C1B19] placeholder-[#8E877E] focus:outline-none text-[0.95rem] font-light"
               />
               {searchQuery && (
-                <button onClick={() => setSearchQuery("")} className="text-[#8E877E] hover:text-[#1C1B19]">
-                  <X className="w-4.5 h-4.5" />
+                <button onClick={() => setSearchQuery("")} className="text-[#8E877E]">
+                  <X className="w-4 h-4" />
                 </button>
               )}
             </div>
 
-            {/* Results Grid */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {/* Dossier listing (no boxes, clean story format) */}
+            <div className="space-y-12">
               {contacts
                 .filter((c) => {
                   const query = searchQuery.toLowerCase();
@@ -724,57 +545,42 @@ export default function Page() {
                   );
                 })
                 .map((contact) => (
-                  <div
-                    key={contact.id}
-                    className="bg-[#F3F1EB] border border-[#E2DDD3] rounded-xl p-5 hover:border-[#C8BFB0] transition-all flex flex-col justify-between space-y-4 shadow-sm"
-                  >
-                    <div>
-                      <div className="flex items-start justify-between">
-                        <div>
-                          <h3 className="font-display font-semibold text-[1.2rem] text-[#1C1B19]">{contact.name}</h3>
-                          <span className="text-[#5C5852] text-[0.85rem] font-medium">{contact.company}</span>
-                        </div>
-                        <span className={`text-[0.75rem] font-semibold px-2 py-0.5 rounded-full border ${
-                          contact.temperature === "Active" ? "bg-[#FAF9F6] border-[#C5A059] text-[#8C6239]" :
-                          contact.temperature === "Cooling" ? "bg-[#FAF9F6] border-[#E2DDD3] text-[#8E877E]" :
-                          "bg-[#FAF9F6] border-[#D4AF37] text-[#D4AF37]"
-                        }`}>
-                          {contact.temperature}
-                        </span>
-                      </div>
+                  <div key={contact.id} className="grid grid-cols-1 md:grid-cols-5 gap-4 items-start">
+                    {/* Header info */}
+                    <div className="md:col-span-2 space-y-1">
+                      <h3 className="font-display font-medium text-[1.25rem] text-[#1C1B19]">{contact.name}</h3>
+                      <p className="text-[#5C5852] text-[0.88rem]">{contact.company} • {contact.temperature}</p>
+                      
+                      <button
+                        onClick={() => handleTriggerComposer(contact)}
+                        className="text-[0.82rem] font-semibold text-[#8C6239] hover:underline pt-2 block"
+                      >
+                        Draft Follow-Up
+                      </button>
+                    </div>
 
-                      <div className="mt-3.5 space-y-2">
-                        <p className="text-[0.85rem] text-[#5C5852] font-medium italic">"{contact.summary}"</p>
-                        <p className="text-[0.85rem] text-[#5C5852] leading-relaxed line-clamp-2">
-                          <span className="font-semibold text-[#1C1B19]">Thesis: </span>
-                          {contact.thesis}
-                        </p>
-                      </div>
+                    {/* Bio context */}
+                    <div className="md:col-span-3 space-y-3">
+                      <p className="text-[0.92rem] text-[#1C1B19] font-normal leading-relaxed">
+                        {contact.summary}
+                      </p>
+                      <p className="text-[0.88rem] text-[#5C5852] leading-relaxed font-light">
+                        <span className="font-medium text-[#1C1B19]">Thesis: </span>
+                        {contact.thesis}
+                      </p>
 
-                      {/* Drivers / Objections tags */}
-                      <div className="mt-4 flex flex-wrap gap-1.5">
-                        {contact.drivers.map((d, idx) => (
-                          <span key={idx} className="bg-[#FAF9F6] border border-[#E2DDD3] text-[#5C5852] text-[0.75rem] px-2 py-0.5 rounded">
+                      <div className="flex flex-wrap gap-2 pt-1 text-[0.78rem]">
+                        {contact.drivers.map((d, i) => (
+                          <span key={i} className="text-[#8E877E] bg-[#F3F1EB] px-2 py-0.5 rounded">
                             {d}
                           </span>
                         ))}
-                        {contact.objections.map((o, idx) => (
-                          <span key={idx} className="bg-[#FAF9F6] border border-[#A73F2D]/20 text-[#A73F2D] text-[0.75rem] px-2 py-0.5 rounded">
+                        {contact.objections.map((o, i) => (
+                          <span key={i} className="text-[#A73F2D] bg-[#F3F1EB] px-2 py-0.5 rounded">
                             Concern: {o}
                           </span>
                         ))}
                       </div>
-                    </div>
-
-                    <div className="pt-4 border-t border-[#E2DDD3] flex items-center justify-between">
-                      <span className="text-[0.8rem] text-[#8E877E]">Last contact: {contact.lastInteraction}</span>
-                      <button
-                        onClick={() => handleTriggerComposer(contact)}
-                        className="text-[0.8rem] font-semibold bg-[#1C1B19] hover:bg-[#2D2B28] text-[#FAF9F6] px-3.5 py-1.5 rounded-md transition-all flex items-center space-x-1.5"
-                      >
-                        <Mail className="w-3.5 h-3.5" />
-                        <span>Draft Follow-Up</span>
-                      </button>
                     </div>
                   </div>
                 ))}
@@ -783,98 +589,47 @@ export default function Page() {
         )}
 
         {/* =====================================================================
-            FOLLOW-UPS VIEW (ACTIVE COMMPOSE TEMPLATE SCREEN)
+            INBOX VIEW (PENDING ACTION LIST)
             ===================================================================== */}
-        {activeTab === "followups" && (
-          <div className="space-y-8 animate-in fade-in duration-300">
-            <div className="space-y-2">
-              <h2 className="font-display text-[1.8rem] font-semibold tracking-tight">Active Follow-Up Queue</h2>
-              <p className="text-[#5C5852] text-[0.95rem]">Outstanding commitments and generated emails needing review.</p>
+        {activeTab === "inbox" && (
+          <div className="space-y-10 animate-in fade-in duration-200">
+            <div className="space-y-1">
+              <h2 className="font-display text-[1.8rem] font-semibold tracking-tight">Inbox</h2>
+              <p className="text-[#5C5852] text-[0.9rem] font-light">Awaiting follow-up drafts and tasks to close loops.</p>
             </div>
 
-            <div className="bg-[#F3F1EB] border border-[#E2DDD3] rounded-xl p-6 shadow-sm max-w-4xl space-y-6">
+            <div className="space-y-8 max-w-2xl">
               {commitments.filter(c => c.status === "open").length === 0 ? (
-                <div className="py-12 text-center space-y-3">
-                  <CheckCircle2 className="w-10 h-10 text-[#8C6239] mx-auto" />
-                  <h3 className="font-medium text-[#1C1B19]">No pending commitments!</h3>
-                  <p className="text-[#8E877E] text-[0.85rem]">All loops are successfully closed.</p>
-                </div>
+                <p className="text-[#8E877E] text-[0.9rem] font-light py-8">Your inbox is empty. All commitments are resolved.</p>
               ) : (
-                <div className="divide-y divide-[#E2DDD3] space-y-4">
-                  {contacts.map((contact) => {
-                    const contactComms = commitments.filter(c => c.status === "open");
-                    if (contactComms.length === 0) return null;
+                contacts.map((contact) => {
+                  const contactComms = commitments.filter(c => c.status === "open");
+                  if (contactComms.length === 0) return null;
 
-                    return (
-                      <div key={contact.id} className="pt-4 first:pt-0 flex flex-col md:flex-row md:items-center justify-between gap-4">
-                        <div>
-                          <div className="flex items-center space-x-2">
-                            <span className="font-semibold text-[1.05rem]">{contact.name}</span>
-                            <span className="text-[0.8rem] text-[#8E877E]">{contact.company}</span>
-                          </div>
-                          
-                          <div className="mt-2 space-y-1.5">
-                            {contactComms.map((com) => (
-                              <div key={com.id} className="flex items-start space-x-2 text-[0.88rem] text-[#5C5852]">
-                                <Clock className="w-4 h-4 text-[#8C6239] mt-0.5 shrink-0" />
-                                <span>{com.description} {com.dueDate && `(Due ${com.dueDate})`}</span>
-                              </div>
-                            ))}
-                          </div>
-                        </div>
-
-                        <div>
-                          <button
-                            onClick={() => handleTriggerComposer(contact)}
-                            className="bg-[#1C1B19] hover:bg-[#2D2B28] text-[#FAF9F6] text-[0.85rem] font-medium px-4 py-2 rounded-md transition-all flex items-center space-x-1.5 shadow-sm"
-                          >
-                            <Mail className="w-3.5 h-3.5" />
-                            <span>Draft Follow-Up</span>
-                          </button>
+                  return (
+                    <div key={contact.id} className="flex justify-between items-start border-b border-[#E2DDD3]/40 pb-6 last:border-0">
+                      <div className="space-y-1.5">
+                        <span className="font-medium text-[1.05rem]">{contact.name}</span>
+                        <span className="text-[0.8rem] text-[#8E877E] ml-2">{contact.company}</span>
+                        <div className="space-y-1">
+                          {contactComms.map((com) => (
+                            <p key={com.id} className="text-[0.9rem] text-[#5C5852] font-light">
+                              • {com.description} {com.dueDate && `(Due ${com.dueDate})`}
+                            </p>
+                          ))}
                         </div>
                       </div>
-                    );
-                  })}
-                </div>
-              )}
-            </div>
-          </div>
-        )}
 
-        {/* =====================================================================
-            UPDATES VIEW (SYSTEM AUDIT LOG)
-            ===================================================================== */}
-        {activeTab === "updates" && (
-          <div className="space-y-8 animate-in fade-in duration-300 max-w-3xl">
-            <div className="space-y-2">
-              <h2 className="font-display text-[1.8rem] font-semibold tracking-tight">System Updates</h2>
-              <p className="text-[#5C5852] text-[0.95rem]">Audit trail logs of decisions, facts, and milestones processed by MemoryCRM.</p>
-            </div>
-
-            <div className="space-y-4">
-              {logs.map((log) => (
-                <div
-                  key={log.id}
-                  className="bg-[#F3F1EB] border border-[#E2DDD3] rounded-xl p-4.5 flex items-start space-x-3.5 hover:border-[#C8BFB0] transition-all"
-                >
-                  <div className="w-8 h-8 rounded-full bg-[#FAF9F6] border border-[#E2DDD3] flex items-center justify-center shrink-0">
-                    <CheckCircle2 className="w-4.5 h-4.5 text-[#8C6239]" />
-                  </div>
-                  <div className="space-y-1">
-                    <div className="flex items-center space-x-2">
-                      <span className="font-semibold text-[0.95rem]">
-                        {log.type === "email" ? "Email interaction ingested" :
-                         log.type === "zoom" ? "Meeting transcript parsed" :
-                         log.type === "slack" ? "Slack thread analyzed" : "Calendar synced"}
-                      </span>
-                      <span className="text-[0.8rem] text-[#8E877E]">• {log.timestamp}</span>
+                      <button
+                        onClick={() => handleTriggerComposer(contact)}
+                        className="text-[0.82rem] font-semibold text-[#8C6239] hover:underline"
+                      >
+                        Draft Follow-Up
+                      </button>
                     </div>
-                    <p className="text-[0.88rem] text-[#5C5852] font-light">
-                      Successfully reconciled facts and updated relationship state for <span className="font-medium text-[#1C1B19]">{log.source}</span>.
-                    </p>
-                  </div>
-                </div>
-              ))}
+                  );
+                })
+              )}
             </div>
           </div>
         )}
@@ -882,42 +637,35 @@ export default function Page() {
       </main>
 
       {/* =========================================================================
-          BOTTOM-RIGHT SLIDE-UP EMAIL COMPOSER
+          BOTTOM-RIGHT SLIDE-UP EMAIL COMPOSER (REFINED INTERACTION)
           ========================================================================= */}
       {activeDraft && (
-        <div className="fixed bottom-0 right-6 z-50 w-full max-w-lg bg-[#FAF9F6] border border-[#C8BFB0] rounded-t-xl shadow-2xl overflow-hidden animate-in slide-in-from-bottom duration-300">
+        <div className="fixed bottom-0 right-8 z-50 w-full max-w-md bg-[#FAF9F6] border border-[#C8BFB0] rounded-t-xl shadow-lg overflow-hidden animate-in slide-in-from-bottom duration-250">
           {/* Header */}
           <div className="bg-[#EBE8DF] border-b border-[#C8BFB0] px-4 py-3 flex items-center justify-between">
-            <div className="flex items-center space-x-2">
-              <Mail className="w-4 h-4 text-[#8C6239]" />
-              <span className="font-display font-medium text-[0.92rem]">Drafting Follow-up to {activeDraft.contact.name}</span>
-            </div>
-            <div className="flex items-center space-x-1.5">
-              <button className="text-[#8E877E] hover:text-[#1C1B19] p-0.5 rounded">
-                <Maximize2 className="w-3.5 h-3.5" />
-              </button>
-              <button
-                onClick={() => setActiveDraft(null)}
-                className="text-[#8E877E] hover:text-[#1C1B19] p-0.5 rounded"
-              >
-                <X className="w-4 h-4" />
-              </button>
-            </div>
+            <span className="font-display font-medium text-[0.9rem]">Email Draft</span>
+            <button
+              onClick={() => setActiveDraft(null)}
+              className="text-[#8E877E] hover:text-[#1C1B19]"
+            >
+              <X className="w-4 h-4" />
+            </button>
           </div>
 
           {/* Form */}
-          <div className="p-4 space-y-3.5">
-            <div className="flex items-center justify-between text-[0.85rem] pb-2 border-b border-[#E2DDD3]">
-              <span className="text-[#8E877E]">To:</span>
+          <div className="p-5 space-y-4">
+            <div className="flex items-center text-[0.85rem] pb-2 border-b border-[#E2DDD3]/50">
+              <span className="text-[#8E877E] w-12">To:</span>
               <span className="font-medium text-[#1C1B19]">{activeDraft.contact.email}</span>
             </div>
-            <div className="flex items-center justify-between text-[0.85rem] pb-2 border-b border-[#E2DDD3]">
-              <span className="text-[#8E877E]">Subject:</span>
+            
+            <div className="flex items-center text-[0.85rem] pb-2 border-b border-[#E2DDD3]/50">
+              <span className="text-[#8E877E] w-12">Subject:</span>
               <input
                 type="text"
                 value={activeDraft.subject}
                 onChange={(e) => setActiveDraft({ ...activeDraft, subject: e.target.value })}
-                className="font-medium text-[#1C1B19] w-full text-right bg-transparent focus:outline-none"
+                className="font-medium text-[#1C1B19] w-full bg-transparent"
               />
             </div>
 
@@ -925,52 +673,44 @@ export default function Page() {
               rows={8}
               value={activeDraft.body}
               onChange={(e) => setActiveDraft({ ...activeDraft, body: e.target.value })}
-              className="w-full bg-[#F3F1EB]/50 border border-[#E2DDD3] rounded-lg p-3 text-[0.9rem] text-[#1C1B19] focus:outline-none font-sans leading-relaxed resize-none"
+              className="w-full bg-[#F3F1EB]/30 border border-[#E2DDD3] rounded-lg p-3 text-[0.9rem] text-[#1C1B19] leading-relaxed resize-none"
             />
 
-            {/* Context Helper box */}
-            <div className="bg-[#F3F1EB] rounded-lg p-3 border border-[#E2DDD3] text-[0.8rem] space-y-1.5">
-              <span className="font-semibold text-[#8C6239] uppercase tracking-wider block">Context Panel Reference</span>
-              <p className="text-[#5C5852]">
-                <span className="font-medium text-[#1C1B19]">Thesis: </span>
+            {/* Helper box (Refined copywriting: Before you send) */}
+            <div className="bg-[#F3F1EB] rounded-lg p-3 text-[0.8rem] space-y-1">
+              <span className="font-semibold text-[#8C6239] block uppercase tracking-wider text-[0.7rem]">Before You Send</span>
+              <p className="text-[#5C5852] font-light">
                 {activeDraft.contact.thesis}
               </p>
-              <div className="flex flex-wrap gap-1 mt-1">
-                {activeDraft.contact.drivers.map((d, idx) => (
-                  <span key={idx} className="bg-[#FAF9F6] text-[#8E877E] border border-[#E2DDD3] px-1.5 py-0.2 rounded text-[0.75rem]">
-                    {d}
-                  </span>
-                ))}
-              </div>
             </div>
 
-            {/* Actions */}
+            {/* Action buttons */}
             <div className="flex items-center justify-between pt-1">
               <button
-                onClick={() => setActiveDraft(null)}
-                className="text-[0.85rem] font-medium text-[#5C5852] hover:text-[#1C1B19] py-1.5"
+                onClick={() => {
+                  // Simulate CASUAL rewrite
+                  setActiveDraft({
+                    ...activeDraft,
+                    body: `Hi ${activeDraft.contact.name.split(" ")[0]},\n\nCassual follow up on our previous conversation. Let me know when you're free for a quick catch up.\n\nBest,\nDaksh`
+                  });
+                }}
+                className="text-[0.82rem] text-[#8C6239] hover:underline"
               >
-                Discard Draft
+                Make Casual
               </button>
-              <div className="flex items-center space-x-2">
+
+              <div className="flex items-center space-x-3">
                 <button
-                  onClick={() => {
-                    // Quick regeneration simulation
-                    setActiveDraft({
-                      ...activeDraft,
-                      body: `Hi ${activeDraft.contact.name.split(" ")[0]},\n\nReaching out relative to our conversation yesterday. Just wanted to follow up and see if you had any thoughts. Let's touch base next week.\n\nBest,\nDaksh`
-                    });
-                  }}
-                  className="text-[0.82rem] font-medium text-[#8C6239] hover:underline px-3 py-1.5"
+                  onClick={() => setActiveDraft(null)}
+                  className="text-[0.85rem] text-[#8E877E] hover:text-[#1C1B19]"
                 >
-                  Regenerate
+                  Discard
                 </button>
                 <button
                   onClick={handleSendDraft}
-                  className="bg-[#1C1B19] hover:bg-[#2D2B28] text-[#FAF9F6] text-[0.85rem] font-semibold px-4.5 py-2 rounded-md shadow-sm flex items-center space-x-1.5 transition-colors"
+                  className="bg-[#1C1B19] hover:bg-[#2D2B28] text-[#FAF9F6] text-[0.85rem] font-semibold px-4.5 py-1.8 rounded shadow-sm"
                 >
-                  <Send className="w-3.5 h-3.5" />
-                  <span>Send via Gmail</span>
+                  Send via Gmail
                 </button>
               </div>
             </div>
@@ -979,40 +719,27 @@ export default function Page() {
       )}
 
       {/* =========================================================================
-          QUICK CAPTURE SLIDE-OVER DRAWER
+          QUICK CAPTURE SLIDE-OVER DRAWER (REFINED)
           ========================================================================= */}
       {isQuickCaptureOpen && (
         <div className="fixed inset-0 z-50 flex justify-end">
-          {/* Backdrop */}
           <div
             onClick={() => setIsQuickCaptureOpen(false)}
-            className="absolute inset-0 bg-[#1C1B19]/20 backdrop-blur-xs transition-opacity"
+            className="absolute inset-0 bg-[#1C1B19]/10 backdrop-blur-xs"
           />
 
-          {/* Drawer container */}
-          <div className="relative w-full max-w-md h-full bg-[#FAF9F6] border-l border-[#C8BFB0] shadow-2xl flex flex-col animate-in slide-in-from-right duration-300">
-            <div className="px-6 py-5 border-b border-[#E2DDD3] flex items-center justify-between bg-[#EBE8DF]/50">
-              <div className="flex items-center space-x-2">
-                <Sparkles className="w-4.5 h-4.5 text-[#8C6239]" />
-                <h3 className="font-display font-semibold text-[1.1rem]">Quick Capture</h3>
-              </div>
-              <button
-                onClick={() => setIsQuickCaptureOpen(false)}
-                className="text-[#8E877E] hover:text-[#1C1B19] p-0.5 rounded"
-              >
-                <X className="w-5 h-5" />
+          <div className="relative w-full max-w-md h-full bg-[#FAF9F6] border-l border-[#C8BFB0] shadow-xl flex flex-col animate-in slide-in-from-right duration-250">
+            <div className="px-6 py-5 border-b border-[#E2DDD3]/50 flex items-center justify-between bg-[#EBE8DF]/30">
+              <h3 className="font-display font-semibold text-[1.1rem]">Add Conversation</h3>
+              <button onClick={() => setIsQuickCaptureOpen(false)}>
+                <X className="w-5 h-5 text-[#8E877E]" />
               </button>
             </div>
 
             <form onSubmit={handleQuickCaptureSubmit} className="flex-grow flex flex-col p-6 space-y-4">
-              <div className="space-y-1.5">
-                <label className="text-[0.8rem] font-semibold uppercase tracking-wider text-[#8E877E]">
-                  Pasted Conversation Context
-                </label>
-                <p className="text-[0.85rem] text-[#5C5852] font-light leading-relaxed">
-                  Paste emails, Slack conversations, or type manual coffee notes. The Lemma Consolidated Extractor parses facts in the background.
-                </p>
-              </div>
+              <p className="text-[0.85rem] text-[#5C5852] font-light leading-relaxed">
+                Paste meeting transcripts, email logs, or manual coffee notes. The assistant will parse context and extract milestones.
+              </p>
 
               <textarea
                 value={quickCaptureText}
@@ -1021,34 +748,24 @@ export default function Page() {
                 rows={12}
                 required
                 disabled={isProcessingCapture}
-                className="w-full bg-[#F3F1EB] border border-[#E2DDD3] rounded-xl p-4 text-[0.9rem] text-[#1C1B19] focus:outline-none font-sans leading-relaxed resize-none flex-grow"
+                className="w-full bg-[#F3F1EB]/50 border border-[#E2DDD3] rounded-lg p-4 text-[0.9rem] leading-relaxed resize-none flex-grow"
               />
 
-              <div className="flex items-center justify-end space-x-2 pt-4">
+              <div className="flex items-center justify-end space-x-3 pt-4 border-t border-[#E2DDD3]/40">
                 <button
                   type="button"
                   onClick={() => setIsQuickCaptureOpen(false)}
                   disabled={isProcessingCapture}
-                  className="text-[0.85rem] font-medium text-[#5C5852] hover:text-[#1C1B19] px-4 py-2"
+                  className="text-[0.85rem] text-[#8E877E]"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
                   disabled={isProcessingCapture || !quickCaptureText.trim()}
-                  className="bg-[#1C1B19] hover:bg-[#2D2B28] disabled:bg-[#8E877E] text-[#FAF9F6] text-[0.85rem] font-semibold px-4.5 py-2 rounded-md shadow-sm flex items-center space-x-1.5 transition-colors"
+                  className="bg-[#1C1B19] hover:bg-[#2D2B28] disabled:bg-[#8E877E] text-[#FAF9F6] text-[0.85rem] font-semibold px-4.5 py-1.8 rounded"
                 >
-                  {isProcessingCapture ? (
-                    <>
-                      <RefreshCw className="w-3.5 h-3.5 animate-spin" />
-                      <span>Ingesting Context...</span>
-                    </>
-                  ) : (
-                    <>
-                      <Send className="w-3.5 h-3.5" />
-                      <span>Process Note</span>
-                    </>
-                  )}
+                  {isProcessingCapture ? "Parsing..." : "Add to memory"}
                 </button>
               </div>
             </form>
