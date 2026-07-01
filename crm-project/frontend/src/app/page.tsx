@@ -609,8 +609,8 @@ export default function Page() {
                         <span className="text-[#EBE6D9]">•</span>
                         <button 
                           onClick={() => {
-                            setActiveTab("people");
                             setSelectedContactId(contact.id);
+                            setActiveTab("people");
                           }}
                           className="text-[#6B655E] hover:text-[#1D1D1B]"
                         >
@@ -648,10 +648,10 @@ export default function Page() {
                       <div
                         key={item.id}
                         onClick={() => setActiveStreamIndex(idx)}
-                        className={`transition-all duration-300 rounded-xl p-5 border ${
+                        className={`transition-all duration-500 ease-out transform rounded-xl p-5 border ${
                           isFocused
-                            ? "bg-[#FCFAF6] border-[#D5CBB5] shadow-xs scale-100 opacity-100"
-                            : "bg-[#FCFAF6]/40 border-[#EBE6D9] scale-98 opacity-50 hover:opacity-80"
+                            ? "bg-[#FCFAF6] border-[#D5CBB5] shadow-sm translate-y-0 opacity-100 scale-100"
+                            : "bg-[#FCFAF6]/40 border-[#EBE6D9] translate-y-4 opacity-30 scale-95 hover:opacity-60"
                         }`}
                       >
                         {/* Header preview row */}
@@ -678,7 +678,7 @@ export default function Page() {
 
                         {/* PROGRESSIVE DISCLOSURE: Show only when focused */}
                         {isFocused && (
-                          <div className="mt-3.5 space-y-3 animate-in fade-in duration-200">
+                          <div className="mt-3.5 space-y-3 animate-in fade-in duration-300">
                             <div className="space-y-1">
                               <span className="text-[0.7rem] uppercase tracking-wider font-semibold text-[#A36A2B] block">Why it matters</span>
                               <p className="text-[0.88rem] text-[#6B655E] leading-relaxed font-light">
@@ -690,17 +690,31 @@ export default function Page() {
                               {item.context}
                             </p>
 
-                            <button
-                              onClick={(e) => {
-                                e.stopPropagation(); // Avoid triggering click select
-                                const contact = contacts.find(c => c.id === item.contactId);
-                                if (contact) handleTriggerComposer(contact);
-                              }}
-                              className="w-full bg-[#1D1D1B] hover:bg-[#2D2B28] text-[#FCFAF6] text-[0.82rem] font-semibold py-1.8 rounded transition-colors flex items-center justify-center space-x-1.5 mt-2"
-                            >
-                              <Mail className="w-3.5 h-3.5" />
-                              <span>{item.btnLabel}</span>
-                            </button>
+                            {/* Action Buttons row (Send Draft + View history redirect) */}
+                            <div className="flex flex-col sm:flex-row items-stretch sm:items-center sm:justify-between gap-3 pt-2">
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setSelectedContactId(item.contactId);
+                                  setActiveTab("people");
+                                }}
+                                className="text-[0.82rem] text-[#A36A2B] hover:text-[#1D1D1B] font-semibold underline underline-offset-2 transition-all text-left"
+                              >
+                                View Relationship History
+                              </button>
+
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  const contact = contacts.find(c => c.id === item.contactId);
+                                  if (contact) handleTriggerComposer(contact);
+                                }}
+                                className="bg-[#1D1D1B] hover:bg-[#2D2B28] text-[#FCFAF6] text-[0.82rem] font-semibold px-4.5 py-1.8 rounded transition-colors flex items-center justify-center space-x-1.5 shrink-0"
+                              >
+                                <Mail className="w-3.5 h-3.5" />
+                                <span>{item.btnLabel}</span>
+                              </button>
+                            </div>
                           </div>
                         )}
                       </div>
@@ -910,7 +924,7 @@ export default function Page() {
                       </div>
                     </div>
 
-                    {/* Supporting Tags */}
+                    {/* Supporting Context */}
                     <div className="space-y-2 pt-2">
                       <h4 className="text-[0.72rem] uppercase tracking-widest font-semibold text-[#6B655E]">Supporting Context</h4>
                       <div className="flex flex-wrap gap-2 text-[0.78rem]">
