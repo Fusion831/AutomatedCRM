@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import {
   Sparkles,
   Inbox,
@@ -62,8 +62,21 @@ interface ProcessedLog {
   status: "completed" | "processing";
 }
 
+interface StreamItem {
+  id: string;
+  contactId: string;
+  type: "Commitment" | "Meeting Preparation" | "Waiting On Founder" | "Re-engagement";
+  person: string;
+  company: string;
+  action: string;
+  why: string;
+  timing: string;
+  context: string;
+  btnLabel: string;
+}
+
 // ============================================================================
-// HIGH-FIDELITY MOCK DATABASES (RICH TIMELINES + EDITORIAL FOCUS)
+// HIGH-FIDELITY MOCK DATABASES
 // ============================================================================
 
 const INITIAL_CONTACTS: Contact[] = [
@@ -228,6 +241,57 @@ const INITIAL_LOGS: ProcessedLog[] = [
   }
 ];
 
+const INITIAL_STREAM_ITEMS: StreamItem[] = [
+  {
+    id: "s1",
+    contactId: "rahul-sharma",
+    type: "Commitment",
+    person: "Rahul Sharma",
+    company: "Acme Corp",
+    action: "Send pricing proposal",
+    why: "Rahul requested this during your Zoom call yesterday. Pricing is the final blocker before evaluation.",
+    timing: "Due in 2 days (Fri)",
+    context: "Promise outstanding on founder. Latency metrics were approved.",
+    btnLabel: "Draft Pricing Follow-Up"
+  },
+  {
+    id: "s2",
+    contactId: "sarah-jenkins",
+    type: "Meeting Preparation",
+    person: "Sarah Jenkins",
+    company: "NextGen AI",
+    action: "Review financial model",
+    why: "CAC spreadsheet projections must be aligned before the seed term sheet review.",
+    timing: "Due tomorrow",
+    context: "Preparation for upcoming investor call scheduled for Friday.",
+    btnLabel: "Draft Projections Follow-Up"
+  },
+  {
+    id: "s3",
+    contactId: "elena-rostova",
+    type: "Waiting On Founder",
+    person: "Elena Rostova",
+    company: "SecureAuth",
+    action: "Security review pending",
+    why: "Elena approved the proxy encryption demo. We need to follow up for the VP intro.",
+    timing: "Due next week",
+    context: "Enterprise SAML token integration path clearance.",
+    btnLabel: "Ping Elena for Intro"
+  },
+  {
+    id: "s4",
+    contactId: "marcus-aurelius",
+    type: "Re-engagement",
+    person: "Marcus Aurelius",
+    company: "Rome Ventures",
+    action: "Follow up after demo",
+    why: "No touchpoint for 16 days. Warm the relationship by sharing candidate job descriptions.",
+    timing: "16 days inactive",
+    context: "Warming relationship for upcoming Series A growth investment.",
+    btnLabel: "Ping Marcus"
+  }
+];
+
 export default function Page() {
   // Navigation State
   const [activeTab, setActiveTab] = useState<"today" | "people" | "inbox">("today");
@@ -237,7 +301,10 @@ export default function Page() {
   const [selectedContactId, setSelectedContactId] = useState<string>("rahul-sharma");
   const [commitments, setCommitments] = useState<Commitment[]>(INITIAL_COMMITMENTS);
   const [logs, setLogs] = useState<ProcessedLog[]>(INITIAL_LOGS);
-  const [lastVisitedAt, setLastVisitedAt] = useState<string>("yesterday at 4:30 PM");
+  
+  // Attention Stream state
+  const [streamItems, setStreamItems] = useState<StreamItem[]>(INITIAL_STREAM_ITEMS);
+  const [activeStreamIndex, setActiveStreamIndex] = useState(0);
 
   // Search state
   const [searchQuery, setSearchQuery] = useState("");
@@ -256,6 +323,40 @@ export default function Page() {
   const [closureMessage, setClosureMessage] = useState<string | null>(null);
 
   const selectedContact = contacts.find(c => c.id === selectedContactId) || contacts[0];
+  const streamRef = useRef<HTMLDivElement>(null);
+
+  // Intercept scroll inside the stream queue container
+  useEffect(() => {
+    const el = streamRef.current;
+    if (!el || activeTab !== "today") return;
+
+    const onWheel = (e: WheelEvent) => {
+      // Prevent default page scroll
+      e.preventDefault();
+
+      if (e.deltaY > 15) {
+        setActiveStreamIndex((prev) => Math.min(prev + 1, streamItems.length - 1));
+      } else if (e.deltaY < -15) {
+        setActiveStreamIndex((prev) => Math.max(prev - 1, 0));
+      }
+    };
+
+    el.addEventListener("wheel", onWheel, { passive: false });
+    return () => {
+      el.removeEventListener("wheel", onWheel);
+    };
+  }, [streamItems.length, activeTab]);
+
+  // Keyboard navigation inside stream
+  const handleStreamKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === "ArrowDown") {
+      e.preventDefault();
+      setActiveStreamIndex((prev) => Math.min(prev + 1, streamItems.length - 1));
+    } else if (e.key === "ArrowUp") {
+      e.preventDefault();
+      setActiveStreamIndex((prev) => Math.max(prev - 1, 0));
+    }
+  };
 
   // Quick Capture
   const handleQuickCaptureSubmit = (e: React.FormEvent) => {
@@ -433,12 +534,12 @@ export default function Page() {
       )}
 
       {/* =========================================================================
-          MAIN PORT CONTAINER (WIDER max-w-6xl FOR BETTER HORIZONTAL USE)
+          MAIN PORT CONTAINER
           ========================================================================= */}
       <main className="flex-grow max-w-6xl w-full mx-auto px-8 py-10">
         
         {/* =====================================================================
-            TODAY VIEW (EDITORIAL MORNING BRIEFING)
+            TODAY VIEW (EDITORIAL MORNING BRIEFING + DYNAMIC ATTENTION STREAM)
             ===================================================================== */}
         {activeTab === "today" && (
           <div className="space-y-16 animate-in fade-in duration-200">
@@ -461,16 +562,16 @@ export default function Page() {
                   </p>
                   <p className="flex items-center space-x-2 text-[#1D1D1B]">
                     <span className="w-1.5 h-1.5 rounded-full bg-[#6A7C52]" />
-                    <span>3 new actions have been suggested</span>
+                    <span>4 new items added to your attention stream</span>
                   </p>
                 </div>
               </div>
             </section>
 
-            {/* Split layout: Needs Attention and Your Next Step */}
+            {/* Split layout: Needs Attention and Dynamic Attention Stream */}
             <div className="grid grid-cols-1 md:grid-cols-5 gap-12 items-start">
               
-              {/* Needs Attention Column */}
+              {/* Needs Attention Column (3/5) */}
               <div className="md:col-span-3 space-y-8">
                 <div className="border-b border-[#EBE6D9] pb-2">
                   <h3 className="text-[0.78rem] tracking-wider uppercase font-semibold text-[#6B655E]">
@@ -521,33 +622,94 @@ export default function Page() {
                 </div>
               </div>
 
-              {/* Your Next Step Column */}
+              {/* Dynamic Attention Stream Queue (2/5) */}
               <div className="md:col-span-2 space-y-6">
-                <div className="border-b border-[#EBE6D9] pb-2">
+                <div className="border-b border-[#EBE6D9] pb-2 flex items-center justify-between">
                   <h3 className="text-[0.78rem] tracking-wider uppercase font-semibold text-[#6B655E]">
-                    Your Next Step
+                    Your Attention Stream
                   </h3>
+                  <span className="text-[0.72rem] text-[#9A9287] font-light">
+                    {activeStreamIndex + 1} of {streamItems.length}
+                  </span>
                 </div>
 
-                <div className="space-y-4">
-                  <div className="space-y-2">
-                    <span className="text-[0.7rem] uppercase tracking-wider font-semibold text-[#A36A2B] block">Immediate priority</span>
-                    <h4 className="font-display font-medium text-[1.3rem] text-[#1D1D1B] leading-snug">
-                      Send pricing proposal to Rahul Sharma.
-                    </h4>
-                  </div>
+                {/* Stream Queue Box - Intercepts scroll and keydown focus */}
+                <div
+                  ref={streamRef}
+                  tabIndex={0}
+                  onKeyDown={handleStreamKeyDown}
+                  className="space-y-4 outline-none select-none cursor-ns-resize"
+                  title="Scroll trackpad/wheel or use ArrowUp/Down to shift focus"
+                >
+                  {streamItems.map((item, idx) => {
+                    const isFocused = idx === activeStreamIndex;
+                    
+                    return (
+                      <div
+                        key={item.id}
+                        onClick={() => setActiveStreamIndex(idx)}
+                        className={`transition-all duration-300 rounded-xl p-5 border ${
+                          isFocused
+                            ? "bg-[#FCFAF6] border-[#D5CBB5] shadow-xs scale-100 opacity-100"
+                            : "bg-[#FCFAF6]/40 border-[#EBE6D9] scale-98 opacity-50 hover:opacity-80"
+                        }`}
+                      >
+                        {/* Header preview row */}
+                        <div className="flex items-center justify-between pb-1.5 border-b border-[#EBE6D9]/40 mb-2">
+                          <span className="text-[0.8rem] text-[#6B655E] font-medium">
+                            {item.person} • {item.company}
+                          </span>
+                          <span className={`text-[0.7rem] px-1.5 py-0.2 rounded font-semibold ${
+                            isFocused ? "bg-[#F1ECE1] text-[#A36A2B]" : "bg-transparent text-[#6B655E]"
+                          }`}>
+                            {item.type}
+                          </span>
+                        </div>
 
-                  <p className="text-[0.88rem] text-[#6B655E] leading-relaxed font-light">
-                    Rahul requested this during your Zoom call yesterday. You promised to send the pricing deck by Friday.
-                  </p>
+                        {/* Action Title */}
+                        <h4 className="font-display font-medium text-[1.12rem] text-[#1D1D1B]">
+                          {item.action}
+                        </h4>
 
-                  <button
-                    onClick={() => handleTriggerComposer(contacts[0])}
-                    className="w-full bg-[#1D1D1B] hover:bg-[#2D2B28] text-[#FCFAF6] text-[0.85rem] font-semibold py-2 rounded transition-colors flex items-center justify-center space-x-2"
-                  >
-                    <Mail className="w-4.5 h-4.5" />
-                    <span>Draft Email</span>
-                  </button>
+                        {/* Timing indicator always visible */}
+                        <span className="text-[0.78rem] text-[#9A9287] font-light mt-1 block">
+                          Timing: {item.timing}
+                        </span>
+
+                        {/* PROGRESSIVE DISCLOSURE: Show only when focused */}
+                        {isFocused && (
+                          <div className="mt-3.5 space-y-3 animate-in fade-in duration-200">
+                            <div className="space-y-1">
+                              <span className="text-[0.7rem] uppercase tracking-wider font-semibold text-[#A36A2B] block">Why it matters</span>
+                              <p className="text-[0.88rem] text-[#6B655E] leading-relaxed font-light">
+                                {item.why}
+                              </p>
+                            </div>
+
+                            <p className="text-[0.82rem] text-[#9A9287] italic font-light">
+                              {item.context}
+                            </p>
+
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation(); // Avoid triggering click select
+                                const contact = contacts.find(c => c.id === item.contactId);
+                                if (contact) handleTriggerComposer(contact);
+                              }}
+                              className="w-full bg-[#1D1D1B] hover:bg-[#2D2B28] text-[#FCFAF6] text-[0.82rem] font-semibold py-1.8 rounded transition-colors flex items-center justify-center space-x-1.5 mt-2"
+                            >
+                              <Mail className="w-3.5 h-3.5" />
+                              <span>{item.btnLabel}</span>
+                            </button>
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+
+                <div className="text-center text-[0.75rem] text-[#9A9287] font-light">
+                  Use your wheel, trackpad, or ↑↓ keys to step through items.
                 </div>
               </div>
 
@@ -573,19 +735,18 @@ export default function Page() {
         )}
 
         {/* =====================================================================
-            PEOPLE VIEW (REDESIGNED: SPLIT MASTER-DETAIL DOSSIER SYSTEM)
+            PEOPLE VIEW (SPLIT MASTER-DETAIL DOSSIER SYSTEM)
             ===================================================================== */}
         {activeTab === "people" && (
           <div className="space-y-8 animate-in fade-in duration-200">
             
-            {/* Search Header - Reduced Prominence */}
+            {/* Search Header */}
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-[#EBE6D9] pb-4">
               <div>
                 <h2 className="font-display text-[1.8rem] font-semibold tracking-tight">People</h2>
                 <p className="text-[#6B655E] text-[0.9rem] font-light">Your relationship intelligence dossier.</p>
               </div>
 
-              {/* Minimal Search bar alignment */}
               <div className="flex items-center bg-[#FCFAF6] border border-[#EBE6D9] px-3.5 py-1.5 rounded-lg w-full sm:max-w-xs">
                 <Search className="w-4 h-4 text-[#6B655E] mr-2 shrink-0" />
                 <input
@@ -606,7 +767,7 @@ export default function Page() {
             {/* Split Screen Master-Detail Dossier Workspace */}
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-stretch min-h-[500px]">
               
-              {/* Left Column: Master Directory list (1/3 width) */}
+              {/* Left Column: Master Directory list */}
               <div className="lg:col-span-1 border-r border-[#EBE6D9] pr-6 space-y-4">
                 <span className="text-[0.7rem] uppercase tracking-wider font-semibold text-[#6B655E] block">Directory</span>
                 
@@ -649,7 +810,7 @@ export default function Page() {
                 </div>
               </div>
 
-              {/* Right Column: Detailed Story-Driven Dossier (2/3 width) */}
+              {/* Right Column: Detailed Dossier */}
               <div className="lg:col-span-2 space-y-8 pl-2">
                 {selectedContact ? (
                   <div className="space-y-8 animate-in fade-in duration-150">
@@ -673,7 +834,7 @@ export default function Page() {
                       </span>
                     </div>
 
-                    {/* 1. Relationship Summary */}
+                    {/* Summary */}
                     <div className="space-y-2">
                       <h4 className="text-[0.72rem] uppercase tracking-widest font-semibold text-[#6B655E]">Relationship Summary</h4>
                       <p className="text-[1.02rem] text-[#1D1D1B] leading-relaxed font-light">
@@ -685,7 +846,7 @@ export default function Page() {
                       </p>
                     </div>
 
-                    {/* 2. Current Focus / Commitments */}
+                    {/* Commitments */}
                     <div className="space-y-3.5">
                       <h4 className="text-[0.72rem] uppercase tracking-widest font-semibold text-[#6B655E]">Current Focus</h4>
                       
@@ -711,14 +872,13 @@ export default function Page() {
                       </div>
                     </div>
 
-                    {/* 3. Narrative Timeline (Visible Memory) */}
+                    {/* Narrative Timeline */}
                     <div className="space-y-4">
                       <h4 className="text-[0.72rem] uppercase tracking-widest font-semibold text-[#6B655E]">Recent Activity</h4>
                       
                       <div className="relative pl-4 border-l border-[#EBE6D9] space-y-6">
                         {selectedContact.timeline.map((evt, idx) => (
                           <div key={idx} className="relative">
-                            {/* Dot indicator */}
                             <span className="absolute -left-[20px] top-1.5 w-2 h-2 rounded-full bg-[#D5CBB5] border border-[#F8F5EF]" />
                             <div className="space-y-0.5">
                               <span className="text-[0.8rem] font-semibold text-[#A36A2B]">{evt.timeframe}</span>
@@ -729,7 +889,7 @@ export default function Page() {
                       </div>
                     </div>
 
-                    {/* 4. Next Suggested Action */}
+                    {/* Next Action */}
                     <div className="pt-4 border-t border-[#EBE6D9] flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                       <div className="space-y-1">
                         <span className="text-[0.72rem] uppercase tracking-widest font-semibold text-[#6B655E]">Suggested action</span>
@@ -744,13 +904,13 @@ export default function Page() {
                           onClick={() => handleTriggerComposer(selectedContact)}
                           className="bg-[#1D1D1B] hover:bg-[#2D2B28] text-[#FCFAF6] text-[0.85rem] font-semibold px-4 py-2 rounded transition-colors flex items-center space-x-2 shadow-xs"
                         >
-                          <Mail className="w-4 h-4" />
+                          <Mail className="w-4.5 h-4.5" />
                           <span>Draft Follow-Up</span>
                         </button>
                       </div>
                     </div>
 
-                    {/* 5. Supporting Tags */}
+                    {/* Supporting Tags */}
                     <div className="space-y-2 pt-2">
                       <h4 className="text-[0.72rem] uppercase tracking-widest font-semibold text-[#6B655E]">Supporting Context</h4>
                       <div className="flex flex-wrap gap-2 text-[0.78rem]">
@@ -779,7 +939,7 @@ export default function Page() {
         )}
 
         {/* =====================================================================
-            INBOX VIEW (PENDING ACTION BRIEF)
+            INBOX VIEW
             ===================================================================== */}
         {activeTab === "inbox" && (
           <div className="space-y-10 animate-in fade-in duration-200">
@@ -878,7 +1038,6 @@ export default function Page() {
             <div className="flex items-center justify-between pt-1">
               <button
                 onClick={() => {
-                  // Simulate CASUAL rewrite
                   setActiveDraft({
                     ...activeDraft,
                     body: `Hi ${activeDraft.contact.name.split(" ")[0]},\n\nCasual follow up on our previous conversation. Let me know when you're free for a quick catch up.\n\nBest,\nDaksh`
@@ -909,7 +1068,7 @@ export default function Page() {
       )}
 
       {/* =========================================================================
-          QUICK CAPTURE SLIDE-OVER DRAWER (REFINED)
+          QUICK CAPTURE SLIDE-OVER DRAWER
           ========================================================================= */}
       {isQuickCaptureOpen && (
         <div className="fixed inset-0 z-50 flex justify-end">
