@@ -4,26 +4,26 @@
   --font-sans: var(--font-inter);
   --font-display: var(--font-outfit);
   
-  --color-bg-primary: #FAF9F6;       /* Warm off-white / Alabaster */
-  --color-bg-secondary: #F3F1EB;     /* Cream surface */
-  --color-bg-tertiary: #EBE8DF;      /* Muted sand */
+  --color-bg-primary: #F8F5EF;       /* Warm textured paper background */
+  --color-bg-secondary: #FCFAF6;     /* Cream white surface */
+  --color-bg-tertiary: #F1ECE1;      /* Slightly darker warm sand border */
   
-  --color-border-subtle: #E2DDD3;    /* Soft beige border */
-  --color-border-strong: #C8BFB0;    /* Muted gold-grey border */
+  --color-border-subtle: #EBE6D9;    /* Soft beige border */
+  --color-border-strong: #D5CBB5;    /* Muted gold-grey border */
 
-  --color-text-primary: #1C1B19;     /* Deep charcoal (high contrast) */
-  --color-text-secondary: #5C5852;   /* Soft asphalt (subtle metadata) */
-  --color-text-tertiary: #8E877E;    /* Muted sand-grey */
+  --color-text-primary: #1D1D1B;     /* Deep rich charcoal */
+  --color-text-secondary: #6B655E;   /* Warm clay grey */
+  --color-text-tertiary: #9A9287;    /* Muted sand grey */
 
-  --color-accent-gold: #C5A059;      /* Classic soft gold */
-  --color-accent-amber: #D4AF37;     /* Warm amber highlight */
-  --color-accent-bronze: #8C6239;    /* Muted bronze accent */
+  --color-accent-gold: #A36A2B;      /* Deep gold / bronze accent */
+  --color-accent-amber: #B97C3A;     /* Muted amber */
+  --color-accent-bronze: #845520;    /* Dark bronze */
   
   /* Relationship Temperature (Human Signals) */
-  --color-temp-active: #C5A059;      /* Warm soft gold */
-  --color-temp-cooling: #8C6239;     /* Deep bronze */
-  --color-temp-cold: #7D8478;        /* Slate/Sage grey */
-  --color-temp-reviving: #D4AF37;    /* Bright amber */
+  --color-temp-active: #A36A2B;      /* Deep gold */
+  --color-temp-cooling: #A14A3A;     /* Terracotta red */
+  --color-temp-cold: #7D8478;        /* Slate / Sage grey */
+  --color-temp-reviving: #6A7C52;    /* Sage green */
 }
 
 /* Custom Scrollbar */
@@ -35,16 +35,16 @@
   background: transparent;
 }
 ::-webkit-scrollbar-thumb {
-  background: #E2DDD3;
+  background: #EBE6D9;
   border-radius: 4px;
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: #C8BFB0;
+  background: #D5CBB5;
 }
 
 body {
-  background-color: #FAF9F6;
-  color: #1C1B19;
+  background-color: #F8F5EF;
+  color: #1D1D1B;
   font-feature-settings: "cv02", "cv03", "cv04", "cv11";
 }
 

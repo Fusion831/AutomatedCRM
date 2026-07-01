@@ -23,24 +23,31 @@ import {
 // TYPE DEFINITIONS
 // ============================================================================
 
+interface TimelineEvent {
+  timeframe: string;
+  description: string;
+}
+
 interface Contact {
   id: string;
   name: string;
   company: string;
+  title: string;
   email: string;
   temperature: "Active" | "Cooling down" | "Cold" | "Reviving";
-  state: string; // waiting_on_me, waiting_on_them, mutual_exploration
+  state: "waiting_on_me" | "waiting_on_them" | "mutual_exploration";
   lastInteraction: string;
   priorityScore: number;
-  priorityReasons: string[];
   summary: string;
   thesis: string;
   drivers: string[];
   objections: string[];
+  timeline: TimelineEvent[];
 }
 
 interface Commitment {
   id: string;
+  contactId: string;
   description: string;
   owner: "founder" | "contact";
   dueDate: string | null;
@@ -56,7 +63,7 @@ interface ProcessedLog {
 }
 
 // ============================================================================
-// HIGH-FIDELITY MOCK DATABASES (REWRITTEN WITH HUMAN COPY)
+// HIGH-FIDELITY MOCK DATABASES (RICH TIMELINES + EDITORIAL FOCUS)
 // ============================================================================
 
 const INITIAL_CONTACTS: Contact[] = [
@@ -64,76 +71,116 @@ const INITIAL_CONTACTS: Contact[] = [
     id: "rahul-sharma",
     name: "Rahul Sharma",
     company: "Acme Corp",
+    title: "VP Engineering",
     email: "rahul@acmecorp.com",
     temperature: "Active",
     state: "waiting_on_me",
     lastInteraction: "Tuesday, 2:15 PM",
     priorityScore: 85,
-    priorityReasons: [
-      "Overdue promise to send the pricing deck.",
-      "Awaiting your reply."
-    ],
-    summary: "VP Engineering. Evaluating observability tool integration to replace Datadog.",
-    thesis: "Rahul is a highly technical decision-maker focused on migration overhead. Latency validation cleared initial objection; waiting on pricing proposal.",
+    summary: "Evaluating observability tool integrations to replace Datadog. Focused on performance benchmarks.",
+    thesis: "Rahul is a highly technical decision-maker concerned about migration latency. Benchmark metrics successfully cleared objections; now waiting for pricing proposal approval.",
     drivers: ["Latency under 2ms", "SOC2 compliance", "Developer ergonomics"],
-    objections: ["Migration complexity", "Datadog transition overlap cost"]
+    objections: ["Migration complexity", "Datadog transition overlap cost"],
+    timeline: [
+      {
+        timeframe: "Yesterday",
+        description: "Zoom sync. Approved latency metrics under 2ms. Requested pricing proposal."
+      },
+      {
+        timeframe: "4 Days Ago",
+        description: "Emailed over latency validation benchmarks and SOC2 compliance documentation."
+      },
+      {
+        timeframe: "2 Weeks Ago",
+        description: "Initial discovery call. Discussed migration complexity and Datadog overlap."
+      }
+    ]
   },
   {
     id: "sarah-jenkins",
     name: "Sarah Jenkins",
     company: "NextGen AI",
+    title: "CEO & Founder",
     email: "sarah@nextgen.ai",
     temperature: "Active",
     state: "waiting_on_me",
     lastInteraction: "Yesterday, 11:30 AM",
     priorityScore: 78,
-    priorityReasons: [
-      "Promise due to send financial models and projections."
-    ],
-    summary: "CEO & Founder. Seeking technical advisory and lead investment round.",
-    thesis: "Sarah has a strong NLP track record. High conviction on product velocity; waiting to send financial model and CAC projections.",
-    drivers: ["Rapid fundraising roadmap", "GTM scalability", "Advisory support"],
-    objections: ["Customer Acquisition Cost margins"]
+    summary: "Building technical advisory relationship while preparing for NextGen's Seed/Series A fundraising round.",
+    thesis: "Sarah has a strong execution track record in the NLP space. High conviction on team velocity; currently waiting to share detailed financial projections.",
+    drivers: ["Strategic GTM guidance", "Cap table construction", "Lead term sheets"],
+    objections: ["Customer Acquisition Cost CAC overhead"],
+    timeline: [
+      {
+        timeframe: "Yesterday",
+        description: "Discussed sales pipeline scaling model. Promised to share our CAC spreadsheet projections."
+      },
+      {
+        timeframe: "4 Days Ago",
+        description: "Reviewed initial investor deck drafts. Shared fundraising roadmap template."
+      },
+      {
+        timeframe: "2 Weeks Ago",
+        description: "Initial coffee meeting. High-level alignment on NLP orchestration market size."
+      }
+    ]
   },
   {
     id: "marcus-aurelius",
     name: "Marcus Aurelius",
     company: "Rome Ventures",
+    title: "Managing Partner",
     email: "marcus@romeventures.vc",
     temperature: "Cooling down",
     state: "waiting_on_them",
     lastInteraction: "16 days ago",
     priorityScore: 40,
-    priorityReasons: [
-      "Active relationship with no touch for 14+ days."
-    ],
-    summary: "Managing Partner. Focuses on developer tools and Series A growth rounds.",
-    thesis: "Marcus is conservative on team expansion pace. Shared Head of Sales job description to warm relationship for upcoming Series A.",
-    drivers: ["Developer community growth", "Sales pipeline velocity"],
-    objections: ["GTM execution speed"]
+    summary: "Warming relationship for prospective Series A investment. Exchanged candidates for sales hires.",
+    thesis: "Marcus is conservative on early scaling velocity. Shared Head of Sales job description to warm the relationship and leverage his candidate network.",
+    drivers: ["Developer community growth", "Consistent sales pipeline velocity"],
+    objections: ["GTM execution speed"],
+    timeline: [
+      {
+        timeframe: "2 Weeks Ago",
+        description: "Shared candidate pipeline. Emailed Sales hiring profile."
+      },
+      {
+        timeframe: "1 Month Ago",
+        description: "Partner meeting at Rome office. Outlined platform expansion goals."
+      }
+    ]
   },
   {
     id: "elena-rostova",
     name: "Elena Rostova",
     company: "SecureAuth",
+    title: "Director of Security",
     email: "elena@secureauth.io",
     temperature: "Reviving",
     state: "waiting_on_them",
     lastInteraction: "3 days ago",
     priorityScore: 65,
-    priorityReasons: [
-      "High momentum relationship. Awaiting security review."
-    ],
-    summary: "Director of Security. Validating identity sync architectures.",
-    thesis: "Elena represents a strategic enterprise partner. Demo went exceptionally well. Awaiting introduction to VP of Infrastructure.",
-    drivers: ["AES-256 rest encryption", "SAML token security"],
-    objections: ["SAML raw metadata token storage"]
+    summary: "Validating cloud proxy identity integration schemas for enterprise enterprise sign-on.",
+    thesis: "Elena is a key compliance gatekeeper. Demo went exceptionally well. Awaiting her introduction to the VP of Infrastructure to discuss SAML keys.",
+    drivers: ["AES-256 rest encryption", "No raw token storage"],
+    objections: ["SAML raw metadata token storage"],
+    timeline: [
+      {
+        timeframe: "3 Days Ago",
+        description: "Completed product demonstration. Elena approved rest-encryption architecture."
+      },
+      {
+        timeframe: "1 Week Ago",
+        description: "Emailed initial security checklist and SOC2 report."
+      }
+    ]
   }
 ];
 
 const INITIAL_COMMITMENTS: Commitment[] = [
   {
     id: "c1",
+    contactId: "rahul-sharma",
     description: "Send detailed financial model and CAC projections",
     owner: "founder",
     dueDate: "2026-07-03",
@@ -141,7 +188,16 @@ const INITIAL_COMMITMENTS: Commitment[] = [
   },
   {
     id: "c2",
-    description: "Review security token documentation",
+    contactId: "sarah-jenkins",
+    description: "Share CAC projections and cap table benchmarks",
+    owner: "founder",
+    dueDate: "2026-07-04",
+    status: "open"
+  },
+  {
+    id: "c3",
+    contactId: "elena-rostova",
+    description: "Introduce to VP of Infrastructure",
     owner: "contact",
     dueDate: null,
     status: "open"
@@ -173,11 +229,12 @@ const INITIAL_LOGS: ProcessedLog[] = [
 ];
 
 export default function Page() {
-  // Navigation State (Editorial tabs)
+  // Navigation State
   const [activeTab, setActiveTab] = useState<"today" | "people" | "inbox">("today");
 
   // Core State
   const [contacts, setContacts] = useState<Contact[]>(INITIAL_CONTACTS);
+  const [selectedContactId, setSelectedContactId] = useState<string>("rahul-sharma");
   const [commitments, setCommitments] = useState<Commitment[]>(INITIAL_COMMITMENTS);
   const [logs, setLogs] = useState<ProcessedLog[]>(INITIAL_LOGS);
   const [lastVisitedAt, setLastVisitedAt] = useState<string>("yesterday at 4:30 PM");
@@ -198,7 +255,9 @@ export default function Page() {
   } | null>(null);
   const [closureMessage, setClosureMessage] = useState<string | null>(null);
 
-  // Quick Capture submission
+  const selectedContact = contacts.find(c => c.id === selectedContactId) || contacts[0];
+
+  // Quick Capture
   const handleQuickCaptureSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!quickCaptureText.trim()) return;
@@ -210,19 +269,26 @@ export default function Page() {
         id: "tom-henderson",
         name: "Tom Henderson",
         company: "Cascade Ventures",
+        title: "Investment Associate",
         email: "tom@cascade.vc",
         temperature: "Active",
         state: "mutual_exploration",
         lastInteraction: "Just now",
         priorityScore: 50,
-        priorityReasons: ["Casual coffee notes parsed."],
         summary: "Investment Associate. Met at Blue Bottle Coffee for relationship building.",
         thesis: "Tom recently moved from NY to SF. Focuses on dev tools. Casually staying in touch.",
         drivers: ["Developer tools", "Database infrastructure"],
-        objections: ["No immediate deals in timeline"]
+        objections: ["No immediate deals in timeline"],
+        timeline: [
+          {
+            timeframe: "Just now",
+            description: "Pasted coffee conversation note."
+          }
+        ]
       };
 
       setContacts((prev) => [newContact, ...prev]);
+      setSelectedContactId("tom-henderson");
       setLogs((prev) => [
         {
           id: `l-capture-${Date.now()}`,
@@ -238,7 +304,7 @@ export default function Page() {
       setQuickCaptureText("");
       setIsQuickCaptureOpen(false);
 
-      setClosureMessage("✓ Note parsed. Tom Henderson added to your relationships.");
+      setClosureMessage("✓ Note parsed. Tom Henderson added.");
       setTimeout(() => setClosureMessage(null), 4000);
     }, 1500);
   };
@@ -251,7 +317,7 @@ export default function Page() {
     } else if (contact.id === "sarah-jenkins") {
       draftBody = `Hi Sarah,\n\nFollowing up on our sync. Attached are the detailed financial model and CAC projections for NextGen AI.\n\nLooking forward to aligning on next steps.\n\nBest,\nDaksh`;
     } else {
-      draftBody = `Hi ${contact.name.split(" ")[0]},\n\nCassual follow up on our previous conversation. Let me know when you're free for a quick catch up.\n\nBest,\nDaksh`;
+      draftBody = `Hi ${contact.name.split(" ")[0]},\n\nCasual follow up on our previous conversation. Let me know when you're free for a quick catch up.\n\nBest,\nDaksh`;
     }
 
     setActiveDraft({
@@ -261,13 +327,13 @@ export default function Page() {
     });
   };
 
-  // Send Draft (Closure feedback loop)
+  // Send Draft (Closure mechanism)
   const handleSendDraft = () => {
     if (!activeDraft) return;
 
     const contactId = activeDraft.contact.id;
 
-    // Shifting state and updating temperature
+    // Shift state
     setContacts((prev) =>
       prev.map((c) => {
         if (c.id === contactId) {
@@ -282,17 +348,17 @@ export default function Page() {
       })
     );
 
-    // Mark outstanding founder commitments resolved
+    // Resolve commitments
     setCommitments((prev) =>
       prev.map((com) => {
-        if (com.status === "open" && com.owner === "founder") {
+        if (com.contactId === contactId && com.status === "open" && com.owner === "founder") {
           return { ...com, status: "completed" };
         }
         return com;
       })
     );
 
-    setClosureMessage(`✓ Email dispatched. Rahul's status updated.`);
+    setClosureMessage(`✓ Email dispatched. Status updated.`);
     setActiveDraft(null);
 
     setTimeout(() => {
@@ -301,16 +367,16 @@ export default function Page() {
   };
 
   return (
-    <div className="min-h-screen bg-[#FAF9F6] text-[#1C1B19] font-sans antialiased flex flex-col relative pb-24">
+    <div className="min-h-screen bg-[#F8F5EF] text-[#1D1D1B] font-sans antialiased flex flex-col relative pb-24">
       
       {/* =========================================================================
-          APPLICATION SHELL / TOP NAVIGATION (REFINED)
+          APPLICATION SHELL / TOP NAVIGATION
           ========================================================================= */}
-      <header className="sticky top-0 z-40 bg-[#FAF9F6]/95 backdrop-blur-xs px-8 py-5">
-        <div className="max-w-4xl mx-auto flex items-center justify-between border-b border-[#E2DDD3]/40 pb-4">
+      <header className="sticky top-0 z-40 bg-[#F8F5EF]/95 backdrop-blur-xs px-8 py-5">
+        <div className="max-w-6xl mx-auto flex items-center justify-between border-b border-[#EBE6D9] pb-4">
           <div className="flex items-baseline space-x-2">
             <span className="font-display font-medium text-[1.05rem] tracking-tight">MemoryCRM</span>
-            <span className="text-[0.78rem] text-[#8E877E] font-light">for your relationships</span>
+            <span className="text-[0.78rem] text-[#6B655E] font-light">for your relationships</span>
           </div>
 
           <nav className="flex items-center space-x-6">
@@ -318,8 +384,8 @@ export default function Page() {
               onClick={() => setActiveTab("today")}
               className={`text-[0.9rem] transition-colors relative py-1 ${
                 activeTab === "today"
-                  ? "text-[#1C1B19] font-medium border-b border-[#1C1B19]"
-                  : "text-[#8E877E] hover:text-[#1C1B19]"
+                  ? "text-[#1D1D1B] font-medium border-b border-[#1D1D1B]"
+                  : "text-[#6B655E] hover:text-[#1D1D1B]"
               }`}
             >
               Today
@@ -328,8 +394,8 @@ export default function Page() {
               onClick={() => setActiveTab("people")}
               className={`text-[0.9rem] transition-colors relative py-1 ${
                 activeTab === "people"
-                  ? "text-[#1C1B19] font-medium border-b border-[#1C1B19]"
-                  : "text-[#8E877E] hover:text-[#1C1B19]"
+                  ? "text-[#1D1D1B] font-medium border-b border-[#1D1D1B]"
+                  : "text-[#6B655E] hover:text-[#1D1D1B]"
               }`}
             >
               People
@@ -338,8 +404,8 @@ export default function Page() {
               onClick={() => setActiveTab("inbox")}
               className={`text-[0.9rem] transition-colors relative py-1 ${
                 activeTab === "inbox"
-                  ? "text-[#1C1B19] font-medium border-b border-[#1C1B19]"
-                  : "text-[#8E877E] hover:text-[#1C1B19]"
+                  ? "text-[#1D1D1B] font-medium border-b border-[#1D1D1B]"
+                  : "text-[#6B655E] hover:text-[#1D1D1B]"
               }`}
             >
               Inbox
@@ -348,7 +414,7 @@ export default function Page() {
 
           <button
             onClick={() => setIsQuickCaptureOpen(true)}
-            className="text-[#8C6239] hover:text-[#1C1B19] text-[0.88rem] font-medium transition-colors flex items-center space-x-1"
+            className="text-[#A36A2B] hover:text-[#1D1D1B] text-[0.88rem] font-medium transition-colors flex items-center space-x-1"
           >
             <Plus className="w-3.5 h-3.5" />
             <span>Add Conversation</span>
@@ -360,16 +426,16 @@ export default function Page() {
           CLOSURE NOTIFICATION POPUP
           ========================================================================= */}
       {closureMessage && (
-        <div className="fixed top-24 left-1/2 -translate-x-1/2 z-50 bg-[#F3F1EB] border border-[#C8BFB0] text-[#1C1B19] px-4 py-2.5 rounded-lg shadow-sm flex items-center space-x-2 text-[0.88rem] animate-in fade-in slide-in-from-top-2 duration-200">
-          <Check className="w-4 h-4 text-[#8C6239]" />
+        <div className="fixed top-24 left-1/2 -translate-x-1/2 z-50 bg-[#FCFAF6] border border-[#D5CBB5] text-[#1D1D1B] px-4 py-2.5 rounded-lg shadow-sm flex items-center space-x-2 text-[0.88rem] animate-in fade-in slide-in-from-top-2 duration-200">
+          <Check className="w-4 h-4 text-[#A36A2B]" />
           <span>{closureMessage}</span>
         </div>
       )}
 
       {/* =========================================================================
-          MAIN PORT (RESTRUCTURED AND CLEAN)
+          MAIN PORT CONTAINER (WIDER max-w-6xl FOR BETTER HORIZONTAL USE)
           ========================================================================= */}
-      <main className="flex-1 max-w-4xl w-full mx-auto px-8 py-10">
+      <main className="flex-grow max-w-6xl w-full mx-auto px-8 py-10">
         
         {/* =====================================================================
             TODAY VIEW (EDITORIAL MORNING BRIEFING)
@@ -377,37 +443,37 @@ export default function Page() {
         {activeTab === "today" && (
           <div className="space-y-16 animate-in fade-in duration-200">
             
-            {/* Morning Briefing Section */}
+            {/* Morning Briefing */}
             <section className="space-y-6">
-              <h2 className="font-display text-[2.6rem] font-medium tracking-tight text-[#1C1B19] leading-tight">
+              <h2 className="font-display text-[2.6rem] font-medium tracking-tight text-[#1D1D1B] leading-tight">
                 Good morning, Daksh.
               </h2>
-              <div className="space-y-2 text-[1.1rem] text-[#5C5852] font-light max-w-2xl">
+              <div className="space-y-2 text-[1.1rem] text-[#6B655E] font-light max-w-2xl">
                 <p>Since you checked in yesterday:</p>
-                <div className="space-y-1 pl-4 border-l border-[#E2DDD3] mt-3">
-                  <p className="flex items-center space-x-2 text-[#1C1B19]">
-                    <span className="w-1.5 h-1.5 rounded-full bg-[#8C6239]" />
-                    <span>2 relationships are <span className="text-[#8C6239] font-medium">cooling down</span></span>
+                <div className="space-y-1 pl-4 border-l border-[#EBE6D9] mt-3">
+                  <p className="flex items-center space-x-2 text-[#1D1D1B]">
+                    <span className="w-1.5 h-1.5 rounded-full bg-[#A36A2B]" />
+                    <span>2 relationships are <span className="text-[#A36A2B] font-medium">cooling down</span></span>
                   </p>
-                  <p className="flex items-center space-x-2 text-[#1C1B19]">
-                    <span className="w-1.5 h-1.5 rounded-full bg-[#8C6239]" />
-                    <span>1 commitment became <span className="text-[#8C6239] font-medium">overdue</span></span>
+                  <p className="flex items-center space-x-2 text-[#1D1D1B]">
+                    <span className="w-1.5 h-1.5 rounded-full bg-[#A14A3A]" />
+                    <span>1 commitment is <span className="text-[#A14A3A] font-medium">overdue</span></span>
                   </p>
-                  <p className="flex items-center space-x-2 text-[#1C1B19]">
-                    <span className="w-1.5 h-1.5 rounded-full bg-[#8C6239]" />
+                  <p className="flex items-center space-x-2 text-[#1D1D1B]">
+                    <span className="w-1.5 h-1.5 rounded-full bg-[#6A7C52]" />
                     <span>3 new actions have been suggested</span>
                   </p>
                 </div>
               </div>
             </section>
 
-            {/* Split layout: Needs Attention (Left) and Your Next Step (Right) */}
+            {/* Split layout: Needs Attention and Your Next Step */}
             <div className="grid grid-cols-1 md:grid-cols-5 gap-12 items-start">
               
-              {/* Needs Attention Column (3/5) - Borderless rows */}
+              {/* Needs Attention Column */}
               <div className="md:col-span-3 space-y-8">
-                <div className="border-b border-[#E2DDD3]/40 pb-2">
-                  <h3 className="text-[0.78rem] tracking-wider uppercase font-semibold text-[#8E877E]">
+                <div className="border-b border-[#EBE6D9] pb-2">
+                  <h3 className="text-[0.78rem] tracking-wider uppercase font-semibold text-[#6B655E]">
                     Needs Attention
                   </h3>
                 </div>
@@ -417,33 +483,35 @@ export default function Page() {
                     <div key={contact.id} className="space-y-2">
                       <div className="flex items-baseline justify-between">
                         <div className="flex items-baseline space-x-2">
-                          <h4 className="font-display font-medium text-[1.15rem] text-[#1C1B19]">{contact.name}</h4>
-                          <span className="text-[0.8rem] text-[#8E877E]">{contact.company}</span>
+                          <h4 className="font-display font-medium text-[1.15rem] text-[#1D1D1B]">{contact.name}</h4>
+                          <span className="text-[0.8rem] text-[#6B655E]">{contact.company}</span>
                         </div>
-                        <span className="text-[0.75rem] text-[#8C6239] font-medium bg-[#F3F1EB] px-2 py-0.5 rounded">
+                        <span className={`text-[0.75rem] font-semibold px-2 py-0.5 rounded ${
+                          contact.temperature === "Active" ? "bg-[#FCFAF6] text-[#A36A2B]" : "bg-[#FCFAF6] text-[#A14A3A]"
+                        }`}>
                           {contact.temperature}
                         </span>
                       </div>
 
-                      <p className="text-[0.92rem] text-[#5C5852] leading-relaxed font-light">
+                      <p className="text-[0.92rem] text-[#6B655E] leading-relaxed font-light">
                         {contact.summary}
                       </p>
 
                       <div className="flex items-center space-x-4 pt-1 text-[0.82rem]">
-                        <span className="text-[#8E877E]">Suggested action:</span>
+                        <span className="text-[#6B655E]">Suggested action:</span>
                         <button
                           onClick={() => handleTriggerComposer(contact)}
-                          className="text-[#8C6239] hover:text-[#1C1B19] font-medium underline underline-offset-2 transition-all"
+                          className="text-[#A36A2B] hover:text-[#1D1D1B] font-medium underline underline-offset-2 transition-all"
                         >
                           Draft Follow-Up
                         </button>
-                        <span className="text-[#E2DDD3]">•</span>
+                        <span className="text-[#EBE6D9]">•</span>
                         <button 
                           onClick={() => {
                             setActiveTab("people");
-                            setSearchQuery(contact.name);
+                            setSelectedContactId(contact.id);
                           }}
-                          className="text-[#8E877E] hover:text-[#1C1B19]"
+                          className="text-[#6B655E] hover:text-[#1D1D1B]"
                         >
                           View History
                         </button>
@@ -453,29 +521,29 @@ export default function Page() {
                 </div>
               </div>
 
-              {/* Your Next Step Column (2/5) - Highlights action borderless */}
+              {/* Your Next Step Column */}
               <div className="md:col-span-2 space-y-6">
-                <div className="border-b border-[#E2DDD3]/40 pb-2">
-                  <h3 className="text-[0.78rem] tracking-wider uppercase font-semibold text-[#8E877E]">
+                <div className="border-b border-[#EBE6D9] pb-2">
+                  <h3 className="text-[0.78rem] tracking-wider uppercase font-semibold text-[#6B655E]">
                     Your Next Step
                   </h3>
                 </div>
 
                 <div className="space-y-4">
                   <div className="space-y-2">
-                    <span className="text-[0.7rem] uppercase tracking-wider font-semibold text-[#8C6239] block">Immediate priority</span>
-                    <h4 className="font-display font-medium text-[1.3rem] text-[#1C1B19] leading-snug">
+                    <span className="text-[0.7rem] uppercase tracking-wider font-semibold text-[#A36A2B] block">Immediate priority</span>
+                    <h4 className="font-display font-medium text-[1.3rem] text-[#1D1D1B] leading-snug">
                       Send pricing proposal to Rahul Sharma.
                     </h4>
                   </div>
 
-                  <p className="text-[0.88rem] text-[#5C5852] leading-relaxed font-light">
-                    Rahul requested this during your Zoom call 5 days ago. You promised to send the pricing deck by Friday.
+                  <p className="text-[0.88rem] text-[#6B655E] leading-relaxed font-light">
+                    Rahul requested this during your Zoom call yesterday. You promised to send the pricing deck by Friday.
                   </p>
 
                   <button
                     onClick={() => handleTriggerComposer(contacts[0])}
-                    className="w-full bg-[#1C1B19] hover:bg-[#2D2B28] text-[#FAF9F6] text-[0.85rem] font-semibold py-2 rounded-md transition-colors flex items-center justify-center space-x-2"
+                    className="w-full bg-[#1D1D1B] hover:bg-[#2D2B28] text-[#FCFAF6] text-[0.85rem] font-semibold py-2 rounded transition-colors flex items-center justify-center space-x-2"
                   >
                     <Mail className="w-4.5 h-4.5" />
                     <span>Draft Email</span>
@@ -485,9 +553,9 @@ export default function Page() {
 
             </div>
 
-            {/* Sync & Activity Logs (Passive layout at bottom) */}
-            <section className="pt-10 border-t border-[#E2DDD3]/40 space-y-4 text-[0.85rem] text-[#5C5852]">
-              <div className="flex items-center justify-between text-[#8E877E] font-medium text-[0.78rem] uppercase tracking-wider">
+            {/* Sync & Activity Logs */}
+            <section className="pt-10 border-t border-[#EBE6D9] space-y-4 text-[0.85rem] text-[#6B655E]">
+              <div className="flex items-center justify-between text-[#6B655E] font-medium text-[0.78rem] uppercase tracking-wider">
                 <span>Sync Status</span>
                 <span>Google & Zoom Synced</span>
               </div>
@@ -495,7 +563,7 @@ export default function Page() {
                 {logs.slice(0, 3).map((log) => (
                   <p key={log.id} className="flex justify-between items-baseline font-light">
                     <span>✓ Processed {log.type} transcript with {log.source}</span>
-                    <span className="text-[#8E877E] text-[0.8rem]">{log.timestamp}</span>
+                    <span className="text-[#6B655E] text-[0.8rem]">{log.timestamp}</span>
                   </p>
                 ))}
               </div>
@@ -505,115 +573,237 @@ export default function Page() {
         )}
 
         {/* =====================================================================
-            PEOPLE VIEW (STORY-DRIVEN RELATIONSHIPS LIST)
+            PEOPLE VIEW (REDESIGNED: SPLIT MASTER-DETAIL DOSSIER SYSTEM)
             ===================================================================== */}
         {activeTab === "people" && (
-          <div className="space-y-10 animate-in fade-in duration-200">
-            <div className="space-y-1">
-              <h2 className="font-display text-[1.8rem] font-semibold tracking-tight">People</h2>
-              <p className="text-[#5C5852] text-[0.9rem] font-light">Explore relationship history, objectives, and concerns.</p>
+          <div className="space-y-8 animate-in fade-in duration-200">
+            
+            {/* Search Header - Reduced Prominence */}
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-[#EBE6D9] pb-4">
+              <div>
+                <h2 className="font-display text-[1.8rem] font-semibold tracking-tight">People</h2>
+                <p className="text-[#6B655E] text-[0.9rem] font-light">Your relationship intelligence dossier.</p>
+              </div>
+
+              {/* Minimal Search bar alignment */}
+              <div className="flex items-center bg-[#FCFAF6] border border-[#EBE6D9] px-3.5 py-1.5 rounded-lg w-full sm:max-w-xs">
+                <Search className="w-4 h-4 text-[#6B655E] mr-2 shrink-0" />
+                <input
+                  type="text"
+                  placeholder="Search names, topics, drivers..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="w-full bg-transparent border-none text-[#1D1D1B] placeholder-[#6B655E] focus:outline-none text-[0.88rem] font-light"
+                />
+                {searchQuery && (
+                  <button onClick={() => setSearchQuery("")} className="text-[#6B655E]">
+                    <X className="w-3.5 h-3.5" />
+                  </button>
+                )}
+              </div>
             </div>
 
-            {/* Minimal Search Bar */}
-            <div className="flex items-center border-b border-[#E2DDD3] py-2 max-w-lg">
-              <Search className="w-4.5 h-4.5 text-[#8E877E] mr-3" />
-              <input
-                type="text"
-                placeholder="Search names, drivers ('latency'), objections ('SOC2')..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full bg-transparent border-none text-[#1C1B19] placeholder-[#8E877E] focus:outline-none text-[0.95rem] font-light"
-              />
-              {searchQuery && (
-                <button onClick={() => setSearchQuery("")} className="text-[#8E877E]">
-                  <X className="w-4 h-4" />
-                </button>
-              )}
-            </div>
-
-            {/* Dossier listing (no boxes, clean story format) */}
-            <div className="space-y-12">
-              {contacts
-                .filter((c) => {
-                  const query = searchQuery.toLowerCase();
-                  return (
-                    c.name.toLowerCase().includes(query) ||
-                    c.company.toLowerCase().includes(query) ||
-                    c.thesis.toLowerCase().includes(query) ||
-                    c.drivers.some((d) => d.toLowerCase().includes(query)) ||
-                    c.objections.some((o) => o.toLowerCase().includes(query))
-                  );
-                })
-                .map((contact) => (
-                  <div key={contact.id} className="grid grid-cols-1 md:grid-cols-5 gap-4 items-start">
-                    {/* Header info */}
-                    <div className="md:col-span-2 space-y-1">
-                      <h3 className="font-display font-medium text-[1.25rem] text-[#1C1B19]">{contact.name}</h3>
-                      <p className="text-[#5C5852] text-[0.88rem]">{contact.company} • {contact.temperature}</p>
-                      
+            {/* Split Screen Master-Detail Dossier Workspace */}
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-stretch min-h-[500px]">
+              
+              {/* Left Column: Master Directory list (1/3 width) */}
+              <div className="lg:col-span-1 border-r border-[#EBE6D9] pr-6 space-y-4">
+                <span className="text-[0.7rem] uppercase tracking-wider font-semibold text-[#6B655E] block">Directory</span>
+                
+                <div className="space-y-2 max-h-[550px] overflow-y-auto pr-2">
+                  {contacts
+                    .filter((c) => {
+                      const query = searchQuery.toLowerCase();
+                      return (
+                        c.name.toLowerCase().includes(query) ||
+                        c.company.toLowerCase().includes(query) ||
+                        c.thesis.toLowerCase().includes(query) ||
+                        c.drivers.some((d) => d.toLowerCase().includes(query)) ||
+                        c.objections.some((o) => o.toLowerCase().includes(query))
+                      );
+                    })
+                    .map((contact) => (
                       <button
-                        onClick={() => handleTriggerComposer(contact)}
-                        className="text-[0.82rem] font-semibold text-[#8C6239] hover:underline pt-2 block"
+                        key={contact.id}
+                        onClick={() => setSelectedContactId(contact.id)}
+                        className={`w-full text-left p-3.5 rounded-lg transition-all flex flex-col space-y-1 ${
+                          selectedContactId === contact.id
+                            ? "bg-[#FCFAF6] border border-[#D5CBB5] shadow-xs"
+                            : "hover:bg-[#FCFAF6]/60 border border-transparent"
+                        }`}
                       >
-                        Draft Follow-Up
+                        <div className="flex items-center justify-between">
+                          <span className="font-display font-medium text-[0.98rem] text-[#1D1D1B]">{contact.name}</span>
+                          <span className={`text-[0.7rem] font-medium px-1.5 py-0.2 rounded ${
+                            contact.temperature === "Active" ? "bg-[#FAF9F6] text-[#A36A2B]" :
+                            contact.temperature === "Cooling down" ? "bg-[#FAF9F6] text-[#A14A3A]" :
+                            "bg-[#FAF9F6] text-[#6A7C52]"
+                          }`}>
+                            {contact.temperature}
+                          </span>
+                        </div>
+                        <span className="text-[0.82rem] text-[#6B655E]">{contact.company} • {contact.title}</span>
+                        <span className="text-[0.78rem] text-[#9A9287] line-clamp-1 italic">"{contact.summary}"</span>
                       </button>
+                    ))}
+                </div>
+              </div>
+
+              {/* Right Column: Detailed Story-Driven Dossier (2/3 width) */}
+              <div className="lg:col-span-2 space-y-8 pl-2">
+                {selectedContact ? (
+                  <div className="space-y-8 animate-in fade-in duration-150">
+                    
+                    {/* Header */}
+                    <div className="flex justify-between items-start border-b border-[#EBE6D9] pb-4">
+                      <div>
+                        <div className="flex items-baseline space-x-3">
+                          <h3 className="font-display font-medium text-[1.6rem] text-[#1D1D1B]">{selectedContact.name}</h3>
+                          <span className="text-[#6B655E] text-[0.9rem]">{selectedContact.title} at {selectedContact.company}</span>
+                        </div>
+                        <p className="text-[0.85rem] text-[#6B655E] mt-1">Primary Email: {selectedContact.email} • Last active: {selectedContact.lastInteraction}</p>
+                      </div>
+
+                      <span className={`text-[0.78rem] font-semibold px-2.5 py-0.5 rounded ${
+                        selectedContact.temperature === "Active" ? "bg-[#FCFAF6] text-[#A36A2B] border border-[#D5CBB5]" :
+                        selectedContact.temperature === "Cooling down" ? "bg-[#FCFAF6] text-[#A14A3A] border border-[#D5CBB5]" :
+                        "bg-[#FCFAF6] text-[#6A7C52] border border-[#D5CBB5]"
+                      }`}>
+                        {selectedContact.temperature}
+                      </span>
                     </div>
 
-                    {/* Bio context */}
-                    <div className="md:col-span-3 space-y-3">
-                      <p className="text-[0.92rem] text-[#1C1B19] font-normal leading-relaxed">
-                        {contact.summary}
+                    {/* 1. Relationship Summary */}
+                    <div className="space-y-2">
+                      <h4 className="text-[0.72rem] uppercase tracking-widest font-semibold text-[#6B655E]">Relationship Summary</h4>
+                      <p className="text-[1.02rem] text-[#1D1D1B] leading-relaxed font-light">
+                        {selectedContact.summary}
                       </p>
-                      <p className="text-[0.88rem] text-[#5C5852] leading-relaxed font-light">
-                        <span className="font-medium text-[#1C1B19]">Thesis: </span>
-                        {contact.thesis}
+                      <p className="text-[0.92rem] text-[#6B655E] leading-relaxed font-light italic">
+                        <span className="font-medium text-[#1D1D1B] not-italic">Strategic thesis: </span>
+                        {selectedContact.thesis}
                       </p>
+                    </div>
 
-                      <div className="flex flex-wrap gap-2 pt-1 text-[0.78rem]">
-                        {contact.drivers.map((d, i) => (
-                          <span key={i} className="text-[#8E877E] bg-[#F3F1EB] px-2 py-0.5 rounded">
-                            {d}
+                    {/* 2. Current Focus / Commitments */}
+                    <div className="space-y-3.5">
+                      <h4 className="text-[0.72rem] uppercase tracking-widest font-semibold text-[#6B655E]">Current Focus</h4>
+                      
+                      <div className="space-y-2 bg-[#FCFAF6] border border-[#EBE6D9] rounded-lg p-4">
+                        {commitments.filter(c => c.contactId === selectedContact.id && c.status === "open").length === 0 ? (
+                          <p className="text-[0.85rem] text-[#6B655E] font-light">No outstanding promises. All loops are closed.</p>
+                        ) : (
+                          <div className="space-y-2">
+                            {commitments.filter(c => c.contactId === selectedContact.id && c.status === "open").map(com => (
+                              <div key={com.id} className="flex items-start space-x-2.5 text-[0.88rem]">
+                                <span className={`w-1.5 h-1.5 rounded-full mt-1.8 ${com.owner === "founder" ? "bg-[#A14A3A]" : "bg-[#A36A2B]"}`} />
+                                <div className="flex-1 flex justify-between">
+                                  <span className="font-light text-[#1D1D1B]">
+                                    {com.owner === "founder" ? "Awaiting your action: " : "Awaiting contact: "}
+                                    {com.description}
+                                  </span>
+                                  {com.dueDate && <span className="text-[#9A9287] text-[0.8rem] ml-4 shrink-0">Target: {com.dueDate}</span>}
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* 3. Narrative Timeline (Visible Memory) */}
+                    <div className="space-y-4">
+                      <h4 className="text-[0.72rem] uppercase tracking-widest font-semibold text-[#6B655E]">Recent Activity</h4>
+                      
+                      <div className="relative pl-4 border-l border-[#EBE6D9] space-y-6">
+                        {selectedContact.timeline.map((evt, idx) => (
+                          <div key={idx} className="relative">
+                            {/* Dot indicator */}
+                            <span className="absolute -left-[20px] top-1.5 w-2 h-2 rounded-full bg-[#D5CBB5] border border-[#F8F5EF]" />
+                            <div className="space-y-0.5">
+                              <span className="text-[0.8rem] font-semibold text-[#A36A2B]">{evt.timeframe}</span>
+                              <p className="text-[0.9rem] text-[#6B655E] font-light">{evt.description}</p>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* 4. Next Suggested Action */}
+                    <div className="pt-4 border-t border-[#EBE6D9] flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                      <div className="space-y-1">
+                        <span className="text-[0.72rem] uppercase tracking-widest font-semibold text-[#6B655E]">Suggested action</span>
+                        <p className="text-[0.9rem] text-[#1D1D1B] font-medium">
+                          {selectedContact.id === "rahul-sharma" ? "Draft proposal and follow up." :
+                           selectedContact.id === "sarah-jenkins" ? "Draft projections follow up." : "Ping casually to warm contact."}
+                        </p>
+                      </div>
+
+                      <div className="flex items-center space-x-2 shrink-0">
+                        <button
+                          onClick={() => handleTriggerComposer(selectedContact)}
+                          className="bg-[#1D1D1B] hover:bg-[#2D2B28] text-[#FCFAF6] text-[0.85rem] font-semibold px-4 py-2 rounded transition-colors flex items-center space-x-2 shadow-xs"
+                        >
+                          <Mail className="w-4 h-4" />
+                          <span>Draft Follow-Up</span>
+                        </button>
+                      </div>
+                    </div>
+
+                    {/* 5. Supporting Tags */}
+                    <div className="space-y-2 pt-2">
+                      <h4 className="text-[0.72rem] uppercase tracking-widest font-semibold text-[#6B655E]">Supporting Context</h4>
+                      <div className="flex flex-wrap gap-2 text-[0.78rem]">
+                        {selectedContact.drivers.map((d, idx) => (
+                          <span key={idx} className="bg-[#FCFAF6] border border-[#EBE6D9] text-[#6B655E] px-2 py-0.5 rounded">
+                            Motivator: {d}
                           </span>
                         ))}
-                        {contact.objections.map((o, i) => (
-                          <span key={i} className="text-[#A73F2D] bg-[#F3F1EB] px-2 py-0.5 rounded">
-                            Concern: {o}
+                        {selectedContact.objections.map((o, idx) => (
+                          <span key={idx} className="bg-[#FCFAF6] border border-[#EBE6D9] text-[#A14A3A] px-2 py-0.5 rounded">
+                            Objection: {o}
                           </span>
                         ))}
                       </div>
                     </div>
+
                   </div>
-                ))}
+                ) : (
+                  <p className="text-[#6B655E] text-[0.9rem] font-light py-8 text-center">Select a contact from the directory to review their dossier.</p>
+                )}
+              </div>
+
             </div>
+
           </div>
         )}
 
         {/* =====================================================================
-            INBOX VIEW (PENDING ACTION LIST)
+            INBOX VIEW (PENDING ACTION BRIEF)
             ===================================================================== */}
         {activeTab === "inbox" && (
           <div className="space-y-10 animate-in fade-in duration-200">
             <div className="space-y-1">
               <h2 className="font-display text-[1.8rem] font-semibold tracking-tight">Inbox</h2>
-              <p className="text-[#5C5852] text-[0.9rem] font-light">Awaiting follow-up drafts and tasks to close loops.</p>
+              <p className="text-[#6B655E] text-[0.9rem] font-light">Awaiting follow-up drafts and tasks to close loops.</p>
             </div>
 
             <div className="space-y-8 max-w-2xl">
               {commitments.filter(c => c.status === "open").length === 0 ? (
-                <p className="text-[#8E877E] text-[0.9rem] font-light py-8">Your inbox is empty. All commitments are resolved.</p>
+                <p className="text-[#6B655E] text-[0.9rem] font-light py-8">Your inbox is empty. All commitments are resolved.</p>
               ) : (
                 contacts.map((contact) => {
-                  const contactComms = commitments.filter(c => c.status === "open");
+                  const contactComms = commitments.filter(c => c.contactId === contact.id && c.status === "open");
                   if (contactComms.length === 0) return null;
 
                   return (
-                    <div key={contact.id} className="flex justify-between items-start border-b border-[#E2DDD3]/40 pb-6 last:border-0">
+                    <div key={contact.id} className="flex justify-between items-start border-b border-[#EBE6D9] pb-6 last:border-0">
                       <div className="space-y-1.5">
                         <span className="font-medium text-[1.05rem]">{contact.name}</span>
-                        <span className="text-[0.8rem] text-[#8E877E] ml-2">{contact.company}</span>
+                        <span className="text-[0.8rem] text-[#6B655E] ml-2">{contact.company}</span>
                         <div className="space-y-1">
                           {contactComms.map((com) => (
-                            <p key={com.id} className="text-[0.9rem] text-[#5C5852] font-light">
+                            <p key={com.id} className="text-[0.9rem] text-[#6B655E] font-light">
                               • {com.description} {com.dueDate && `(Due ${com.dueDate})`}
                             </p>
                           ))}
@@ -622,7 +812,7 @@ export default function Page() {
 
                       <button
                         onClick={() => handleTriggerComposer(contact)}
-                        className="text-[0.82rem] font-semibold text-[#8C6239] hover:underline"
+                        className="text-[0.82rem] font-semibold text-[#A36A2B] hover:underline"
                       >
                         Draft Follow-Up
                       </button>
@@ -637,16 +827,16 @@ export default function Page() {
       </main>
 
       {/* =========================================================================
-          BOTTOM-RIGHT SLIDE-UP EMAIL COMPOSER (REFINED INTERACTION)
+          BOTTOM-RIGHT SLIDE-UP EMAIL COMPOSER
           ========================================================================= */}
       {activeDraft && (
-        <div className="fixed bottom-0 right-8 z-50 w-full max-w-md bg-[#FAF9F6] border border-[#C8BFB0] rounded-t-xl shadow-lg overflow-hidden animate-in slide-in-from-bottom duration-250">
+        <div className="fixed bottom-0 right-8 z-50 w-full max-w-md bg-[#FCFAF6] border border-[#D5CBB5] rounded-t-xl shadow-lg overflow-hidden animate-in slide-in-from-bottom duration-250">
           {/* Header */}
-          <div className="bg-[#EBE8DF] border-b border-[#C8BFB0] px-4 py-3 flex items-center justify-between">
+          <div className="bg-[#F1ECE1] border-b border-[#D5CBB5] px-4 py-3 flex items-center justify-between">
             <span className="font-display font-medium text-[0.9rem]">Email Draft</span>
             <button
               onClick={() => setActiveDraft(null)}
-              className="text-[#8E877E] hover:text-[#1C1B19]"
+              className="text-[#6B655E] hover:text-[#1D1D1B]"
             >
               <X className="w-4 h-4" />
             </button>
@@ -654,18 +844,18 @@ export default function Page() {
 
           {/* Form */}
           <div className="p-5 space-y-4">
-            <div className="flex items-center text-[0.85rem] pb-2 border-b border-[#E2DDD3]/50">
-              <span className="text-[#8E877E] w-12">To:</span>
-              <span className="font-medium text-[#1C1B19]">{activeDraft.contact.email}</span>
+            <div className="flex items-center text-[0.85rem] pb-2 border-b border-[#EBE6D9]">
+              <span className="text-[#6B655E] w-12">To:</span>
+              <span className="font-medium text-[#1D1D1B]">{activeDraft.contact.email}</span>
             </div>
             
-            <div className="flex items-center text-[0.85rem] pb-2 border-b border-[#E2DDD3]/50">
-              <span className="text-[#8E877E] w-12">Subject:</span>
+            <div className="flex items-center text-[0.85rem] pb-2 border-b border-[#EBE6D9]">
+              <span className="text-[#6B655E] w-12">Subject:</span>
               <input
                 type="text"
                 value={activeDraft.subject}
                 onChange={(e) => setActiveDraft({ ...activeDraft, subject: e.target.value })}
-                className="font-medium text-[#1C1B19] w-full bg-transparent"
+                className="font-medium text-[#1D1D1B] w-full bg-transparent"
               />
             </div>
 
@@ -673,13 +863,13 @@ export default function Page() {
               rows={8}
               value={activeDraft.body}
               onChange={(e) => setActiveDraft({ ...activeDraft, body: e.target.value })}
-              className="w-full bg-[#F3F1EB]/30 border border-[#E2DDD3] rounded-lg p-3 text-[0.9rem] text-[#1C1B19] leading-relaxed resize-none"
+              className="w-full bg-[#FCFAF6] border border-[#EBE6D9] rounded-lg p-3 text-[0.9rem] text-[#1D1D1B] leading-relaxed resize-none"
             />
 
-            {/* Helper box (Refined copywriting: Before you send) */}
-            <div className="bg-[#F3F1EB] rounded-lg p-3 text-[0.8rem] space-y-1">
-              <span className="font-semibold text-[#8C6239] block uppercase tracking-wider text-[0.7rem]">Before You Send</span>
-              <p className="text-[#5C5852] font-light">
+            {/* Helper box (Before You Send) */}
+            <div className="bg-[#F1ECE1]/60 rounded-lg p-3 text-[0.8rem] space-y-1">
+              <span className="font-semibold text-[#A36A2B] block uppercase tracking-wider text-[0.7rem]">Before You Send</span>
+              <p className="text-[#6B655E] font-light">
                 {activeDraft.contact.thesis}
               </p>
             </div>
@@ -691,10 +881,10 @@ export default function Page() {
                   // Simulate CASUAL rewrite
                   setActiveDraft({
                     ...activeDraft,
-                    body: `Hi ${activeDraft.contact.name.split(" ")[0]},\n\nCassual follow up on our previous conversation. Let me know when you're free for a quick catch up.\n\nBest,\nDaksh`
+                    body: `Hi ${activeDraft.contact.name.split(" ")[0]},\n\nCasual follow up on our previous conversation. Let me know when you're free for a quick catch up.\n\nBest,\nDaksh`
                   });
                 }}
-                className="text-[0.82rem] text-[#8C6239] hover:underline"
+                className="text-[0.82rem] text-[#A36A2B] hover:underline"
               >
                 Make Casual
               </button>
@@ -702,13 +892,13 @@ export default function Page() {
               <div className="flex items-center space-x-3">
                 <button
                   onClick={() => setActiveDraft(null)}
-                  className="text-[0.85rem] text-[#8E877E] hover:text-[#1C1B19]"
+                  className="text-[0.85rem] text-[#6B655E] hover:text-[#1D1D1B]"
                 >
                   Discard
                 </button>
                 <button
                   onClick={handleSendDraft}
-                  className="bg-[#1C1B19] hover:bg-[#2D2B28] text-[#FAF9F6] text-[0.85rem] font-semibold px-4.5 py-1.8 rounded shadow-sm"
+                  className="bg-[#1D1D1B] hover:bg-[#2D2B28] text-[#FCFAF6] text-[0.85rem] font-semibold px-4.5 py-1.8 rounded"
                 >
                   Send via Gmail
                 </button>
@@ -725,19 +915,19 @@ export default function Page() {
         <div className="fixed inset-0 z-50 flex justify-end">
           <div
             onClick={() => setIsQuickCaptureOpen(false)}
-            className="absolute inset-0 bg-[#1C1B19]/10 backdrop-blur-xs"
+            className="absolute inset-0 bg-[#1D1D1B]/10 backdrop-blur-xs"
           />
 
-          <div className="relative w-full max-w-md h-full bg-[#FAF9F6] border-l border-[#C8BFB0] shadow-xl flex flex-col animate-in slide-in-from-right duration-250">
-            <div className="px-6 py-5 border-b border-[#E2DDD3]/50 flex items-center justify-between bg-[#EBE8DF]/30">
+          <div className="relative w-full max-w-md h-full bg-[#F8F5EF] border-l border-[#D5CBB5] shadow-xl flex flex-col animate-in slide-in-from-right duration-250">
+            <div className="px-6 py-5 border-b border-[#EBE6D9] flex items-center justify-between bg-[#F1ECE1]/30">
               <h3 className="font-display font-semibold text-[1.1rem]">Add Conversation</h3>
               <button onClick={() => setIsQuickCaptureOpen(false)}>
-                <X className="w-5 h-5 text-[#8E877E]" />
+                <X className="w-5 h-5 text-[#6B655E]" />
               </button>
             </div>
 
             <form onSubmit={handleQuickCaptureSubmit} className="flex-grow flex flex-col p-6 space-y-4">
-              <p className="text-[0.85rem] text-[#5C5852] font-light leading-relaxed">
+              <p className="text-[0.85rem] text-[#6B655E] font-light leading-relaxed">
                 Paste meeting transcripts, email logs, or manual coffee notes. The assistant will parse context and extract milestones.
               </p>
 
@@ -748,22 +938,22 @@ export default function Page() {
                 rows={12}
                 required
                 disabled={isProcessingCapture}
-                className="w-full bg-[#F3F1EB]/50 border border-[#E2DDD3] rounded-lg p-4 text-[0.9rem] leading-relaxed resize-none flex-grow"
+                className="w-full bg-[#FCFAF6] border border-[#EBE6D9] rounded-lg p-4 text-[0.9rem] leading-relaxed resize-none flex-grow"
               />
 
-              <div className="flex items-center justify-end space-x-3 pt-4 border-t border-[#E2DDD3]/40">
+              <div className="flex items-center justify-end space-x-3 pt-4 border-t border-[#EBE6D9]">
                 <button
                   type="button"
                   onClick={() => setIsQuickCaptureOpen(false)}
                   disabled={isProcessingCapture}
-                  className="text-[0.85rem] text-[#8E877E]"
+                  className="text-[0.85rem] text-[#6B655E]"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
                   disabled={isProcessingCapture || !quickCaptureText.trim()}
-                  className="bg-[#1C1B19] hover:bg-[#2D2B28] disabled:bg-[#8E877E] text-[#FAF9F6] text-[0.85rem] font-semibold px-4.5 py-1.8 rounded"
+                  className="bg-[#1D1D1B] hover:bg-[#2D2B28] disabled:bg-[#6B655E] text-[#FCFAF6] text-[0.85rem] font-semibold px-4.5 py-1.8 rounded"
                 >
                   {isProcessingCapture ? "Parsing..." : "Add to memory"}
                 </button>
