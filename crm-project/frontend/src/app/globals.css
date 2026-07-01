@@ -1,0 +1,48 @@
+@import "tailwindcss";
+
+@theme {
+  --font-sans: var(--font-inter);
+  --font-display: var(--font-outfit);
+  
+  --color-bg-primary: #FAF9F6;       /* Warm off-white / Alabaster */
+  --color-bg-secondary: #F3F1EB;     /* Cream surface */
+  --color-bg-tertiary: #EBE8DF;      /* Muted sand */
+  
+  --color-border-subtle: #E2DDD3;    /* Soft beige border */
+  --color-border-strong: #C8BFB0;    /* Muted gold-grey border */
+
+  --color-text-primary: #1C1B19;     /* Deep charcoal (high contrast) */
+  --color-text-secondary: #5C5852;   /* Soft asphalt (subtle metadata) */
+  --color-text-tertiary: #8E877E;    /* Muted sand-grey */
+
+  --color-accent-gold: #C5A059;      /* Classic soft gold */
+  --color-accent-amber: #D4AF37;     /* Warm amber highlight */
+  --color-accent-bronze: #8C6239;    /* Muted bronze accent */
+  
+  /* Relationship Temperature (Human Signals) */
+  --color-temp-active: #C5A059;      /* Warm soft gold */
+  --color-temp-cooling: #8C6239;     /* Deep bronze */
+  --color-temp-cold: #7D8478;        /* Slate/Sage grey */
+  --color-temp-reviving: #D4AF37;    /* Bright amber */
+}
+
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: #E2DDD3;
+  border-radius: 4px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #C8BFB0;
+}
+
+body {
+  background-color: #FAF9F6;
+  color: #1C1B19;
+}
