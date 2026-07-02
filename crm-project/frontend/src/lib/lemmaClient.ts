@@ -88,6 +88,19 @@ export interface DBDailyBrief {
 // Caching pod ID
 let cachedPodId: string | null = null;
 
+interface LemmaConfig {
+  apiUrl: string;
+  authUrl: string;
+  podId?: string;
+  token?: string;
+}
+
+declare global {
+  interface Window {
+    __LEMMA_CONFIG__?: Partial<LemmaConfig>;
+  }
+}
+
 async function getPodId(): Promise<string> {
   if (cachedPodId) return cachedPodId;
   try {
@@ -104,14 +117,55 @@ async function getPodId(): Promise<string> {
   }
 }
 
+async function getApiContext() {
+  if (typeof window !== "undefined" && window.__LEMMA_CONFIG__) {
+    const config = window.__LEMMA_CONFIG__;
+    const apiUrl = (config.apiUrl || window.location.origin).replace(/\/$/, "");
+    const podId = config.podId || "019f1423-2ff5-7723-a474-491307d7950e";
+    const token = config.token || "";
+    return {
+      apiUrl,
+      podId,
+      token,
+      isCloud: true
+    };
+  }
+
+  const podId = await getPodId();
+  return {
+    apiUrl: "",
+    podId,
+    token: "",
+    isCloud: false
+  };
+}
+
+async function apiFetch(subPath: string, options: RequestInit = {}): Promise<Response> {
+  const ctx = await getApiContext();
+  let url = "";
+  const headers = new Headers(options.headers);
+
+  if (ctx.isCloud) {
+    url = `${ctx.apiUrl}/pods/${ctx.podId}/${subPath}`;
+    if (ctx.token) {
+      headers.set("Authorization", `Bearer ${ctx.token}`);
+    }
+  } else {
+    url = `/api/lemma/pods/${ctx.podId}/${subPath}`;
+  }
+
+  headers.set("Content-Type", "application/json");
+
+  return await fetch(url, {
+    ...options,
+    headers,
+  });
+}
+
 // Generic query executor
 export async function runQuery(sql: string): Promise<any[]> {
-  const podId = await getPodId();
-  const res = await fetch(`/api/lemma/pods/${podId}/datastore/query`, {
+  const res = await apiFetch("datastore/query", {
     method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
     body: JSON.stringify({ query: sql }),
   });
   if (!res.ok) {
@@ -123,12 +177,8 @@ export async function runQuery(sql: string): Promise<any[]> {
 
 // Generic record CRUD
 export async function createRecord(tableName: string, fields: Record<string, any>): Promise<any> {
-  const podId = await getPodId();
-  const res = await fetch(`/api/lemma/pods/${podId}/datastore/tables/${tableName}/records`, {
+  const res = await apiFetch(`datastore/tables/${tableName}/records`, {
     method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
     body: JSON.stringify({ data: fields }),
   });
   if (!res.ok) {
@@ -138,12 +188,8 @@ export async function createRecord(tableName: string, fields: Record<string, any
 }
 
 export async function updateRecord(tableName: string, id: string, fields: Record<string, any>): Promise<any> {
-  const podId = await getPodId();
-  const res = await fetch(`/api/lemma/pods/${podId}/datastore/tables/${tableName}/records/${id}`, {
+  const res = await apiFetch(`datastore/tables/${tableName}/records/${id}`, {
     method: "PATCH",
-    headers: {
-      "Content-Type": "application/json",
-    },
     body: JSON.stringify({ data: fields }),
   });
   if (!res.ok) {
@@ -153,8 +199,7 @@ export async function updateRecord(tableName: string, id: string, fields: Record
 }
 
 export async function deleteRecord(tableName: string, id: string): Promise<void> {
-  const podId = await getPodId();
-  const res = await fetch(`/api/lemma/pods/${podId}/datastore/tables/${tableName}/records/${id}`, {
+  const res = await apiFetch(`datastore/tables/${tableName}/records/${id}`, {
     method: "DELETE",
   });
   if (!res.ok) {
@@ -164,12 +209,8 @@ export async function deleteRecord(tableName: string, id: string): Promise<void>
 
 // Generic function runner
 export async function runFunction(functionName: string, inputData: Record<string, any>): Promise<any> {
-  const podId = await getPodId();
-  const res = await fetch(`/api/lemma/pods/${podId}/functions/${functionName}/run`, {
+  const res = await apiFetch(`functions/${functionName}/run`, {
     method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
     body: JSON.stringify(inputData),
   });
   if (!res.ok) {
