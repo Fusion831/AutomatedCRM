@@ -64,7 +64,7 @@ interface Contact {
   title: string;
   email: string;
   temperature: "Active" | "Cooling down" | "Cold" | "Reviving";
-  state: "waiting_on_me" | "waiting_on_them" | "mutual_exploration";
+  state: "waiting_on_me" | "waiting_on_them" | "mutual_exploration" | "reengagement_candidate";
   lastInteraction: string;
   priorityScore: number;
   summary: string;
@@ -220,6 +220,24 @@ const DEMO_SCENARIOS = [
     channel: "meeting" as const,
     description: "Initialize a completely new relationship from a first-meeting transcript. Watch the system auto-create the contact, analyze motivators, and bootstrap the timeline.",
     transcript: `[Meeting notes — June 30, 2026]\nFirst intro call with Maya Lin, co-founder of Scale AI.\n\nMaya was interested in our relationship memory system. She mentioned that her team of 15 founders has been struggling with tracking investor follow-ups and keeping warm intros alive.\n\nMaya: I promised to send her our team pricing deck and schedule a demo for her co-founders next Tuesday.\n\nMaya mentioned they have a board meeting in two weeks where they'll decide on their CRM budget.`
+  },
+  {
+    id: 5,
+    title: "Webhook Credentials Delivery",
+    contactName: "Lina Alvarez",
+    company: "ScaleAI",
+    channel: "slack" as const,
+    description: "Deliver sandbox tokens and credentials. Watch the engine extract the new credentials request, flag the urgent developer-blocker state change, and update Lina's timeline.",
+    transcript: `[Slack DM — July 1, 2026]\nLina Alvarez: Hey Daksh! Checking in on the API keys. We're ready to spin up the webhook listener sandbox today to benchmark latency.\nDaksh: Hey Lina! I'll generate your sandbox tokens and compile the latest API routing specs. You'll have them in an hour.\nLina: Awesome, our team is standing by to deploy. Send them over as soon as they are ready!`
+  },
+  {
+    id: 6,
+    title: "Strategic Partnership Sync",
+    contactName: "Marcus Vance",
+    company: "CyberFlow",
+    channel: "meeting" as const,
+    description: "Follow up on a conference intro. Watch the engine create the mutual exploration milestone, identify toolchain overlap blockers, and update the recommended action to schedule engineering sync.",
+    transcript: `[Meeting Notes — July 2, 2026]\nFollow-up call with Marcus Vance, CEO at CyberFlow.\nMarcus is keen to partner on developer workflows. He raised some queries about overlapping feature sets in our client SDK and their open-source CLI tools.\nMarcus: "Let's schedule a deep-dive technical sync next Tuesday and loop in our tech leads to clear up feature overlap."\nI agreed to draft the calendar invite and coordinate with our engineering leads.`
   }
 ];
 
@@ -327,7 +345,7 @@ export default function Page() {
         else if (c.relationship_state === "reengagement_candidate") temp = "Reviving";
  
         let state: Contact["state"] = "mutual_exploration";
-        if (c.relationship_state === "waiting_on_me" || c.relationship_state === "waiting_on_them") {
+        if (c.relationship_state === "waiting_on_me" || c.relationship_state === "waiting_on_them" || c.relationship_state === "reengagement_candidate") {
           state = c.relationship_state;
         }
  
@@ -492,8 +510,8 @@ export default function Page() {
       });
       setLogs(mappedLogs);
 
-      // Map stream items
-      const activeRecs = dbContacts.filter(c => c.recommended_action && c.recommended_action !== "No action required");
+      // Map stream items (excl. reengagement_candidates)
+      const activeRecs = dbContacts.filter(c => c.recommended_action && c.recommended_action !== "No action required" && c.relationship_state !== "reengagement_candidate");
       const mappedStream: StreamItem[] = activeRecs.map(c => {
         const reasoning = c.recommendation_reasoning as any;
         let why = "";
@@ -1105,118 +1123,202 @@ export default function Page() {
                     Your Attention Stream
                   </h3>
                   <span className="text-[0.72rem] text-[#9A9287] font-light">
-                    {activeStreamIndex + 1} of {streamItems.length}
+                    {streamItems.length > 0 ? `${activeStreamIndex + 1} of ${streamItems.length}` : "0 of 0"}
                   </span>
                 </div>
 
                 {/* Stream Queue Box - Intercepts scroll and keydown focus */}
-                <div
-                  ref={streamRef}
-                  tabIndex={0}
-                  onKeyDown={handleStreamKeyDown}
-                  className="space-y-4 outline-none select-none cursor-ns-resize"
-                  title="Scroll trackpad/wheel or use ArrowUp/Down to shift focus"
-                >
-                  {streamItems.map((item, idx) => {
-                    const isFocused = idx === activeStreamIndex;
-                    
-                    return (
-                      <div
-                        key={item.id}
-                        onClick={() => setActiveStreamIndex(idx)}
-                        className={`transition-all duration-500 ease-out transform rounded-xl p-5 border ${
-                          isFocused
-                            ? "bg-[#FCFAF6] border-[#D5CBB5] shadow-sm translate-y-0 opacity-100 scale-100"
-                            : "bg-[#FCFAF6]/40 border-[#EBE6D9] translate-y-4 opacity-30 scale-95 hover:opacity-60"
-                        }`}
-                      >
-                        {/* Header preview row */}
-                        <div className="flex items-center justify-between pb-1.5 border-b border-[#EBE6D9]/40 mb-2">
-                          <span className="text-[0.8rem] text-[#6B655E] font-medium">
-                            {item.person} • {item.company}
-                          </span>
-                          <span className={`text-[0.7rem] px-1.5 py-0.2 rounded font-semibold ${
-                            isFocused ? "bg-[#F1ECE1] text-[#A36A2B]" : "bg-transparent text-[#6B655E]"
-                          }`}>
-                            {item.type}
-                          </span>
-                        </div>
-
-                        {/* Action Title */}
-                        <h4 className="font-display font-medium text-[1.12rem] text-[#1D1D1B]">
-                          {item.action}
-                        </h4>
-
-                        {/* Timing indicator always visible */}
-                        <span className="text-[0.78rem] text-[#9A9287] font-light mt-1 block">
-                          Timing: {item.timing}
-                        </span>
-
-                        {/* PROGRESSIVE DISCLOSURE: Show only when focused */}
-                        {isFocused && (
-                          <div className="mt-3.5 space-y-3 animate-in fade-in duration-300">
-                            <div className="space-y-1">
-                              <div className="flex items-center gap-2">
-                                <span className="text-[0.7rem] uppercase tracking-wider font-semibold text-[#A36A2B]">Why it matters</span>
-                                <EvidenceDrawer
-                                  label={item.action}
-                                  variant="badge"
-                                  evidence={buildEvidence({
-                                    evidenceQuote: item.rawEvidenceQuote,
-                                    sourceType: item.rawEvidenceSource,
-                                    timestamp: item.rawLastInteraction ? formatRelativeTime(item.rawLastInteraction) : "Recently",
-                                    contactName: item.person,
-                                    confidence: item.rawConfidence,
-                                  })}
-                                />
-                              </div>
-                              <p className="text-[0.88rem] text-[#6B655E] leading-relaxed font-light">
-                                {item.why}
-                              </p>
+                {streamItems.length > 0 ? (
+                  <div className="space-y-4">
+                    <div
+                      ref={streamRef}
+                      tabIndex={0}
+                      onKeyDown={handleStreamKeyDown}
+                      className="outline-none select-none bg-[#FCFAF6] border border-[#D5CBB5] rounded-xl p-5 shadow-xs transition-all duration-300 transform scale-100 opacity-100"
+                      title="Scroll trackpad/wheel or use ArrowUp/Down to shift focus"
+                    >
+                      {/* Active Item */}
+                      {(() => {
+                        const item = streamItems[activeStreamIndex];
+                        if (!item) return null;
+                        return (
+                          <div className="space-y-4 animate-in fade-in slide-in-from-bottom-2 duration-300">
+                            {/* Header preview row */}
+                            <div className="flex items-center justify-between pb-1.5 border-b border-[#EBE6D9]/40">
+                              <span className="text-[0.8rem] text-[#6B655E] font-medium">
+                                {item.person} • {item.company}
+                              </span>
+                              <span className="text-[0.72rem] px-1.5 py-0.2 rounded font-semibold bg-[#F1ECE1] text-[#A36A2B]">
+                                {item.type}
+                              </span>
                             </div>
 
-                            <p className="text-[0.82rem] text-[#9A9287] italic font-light">
-                              {item.context}
-                            </p>
+                            {/* Action Title */}
+                            <h4 className="font-display font-medium text-[1.15rem] text-[#1D1D1B] leading-snug">
+                              {item.action}
+                            </h4>
 
-                            {/* Action Buttons row (Send Draft + View history redirect) */}
-                            <div className="flex flex-col sm:flex-row items-stretch sm:items-center sm:justify-between gap-3 pt-2">
-                              <button
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  setSelectedContactId(item.contactId);
-                                  setActiveTab("people");
-                                }}
-                                className="text-[0.82rem] text-[#A36A2B] hover:text-[#1D1D1B] font-semibold underline underline-offset-2 transition-all text-left"
-                              >
-                                View Relationship History
-                              </button>
+                            {/* Timing indicator */}
+                            <span className="text-[0.78rem] text-[#9A9287] font-light block">
+                              Timing: {item.timing}
+                            </span>
 
-                              <button
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  const contact = contacts.find(c => c.id === item.contactId);
-                                  if (contact) handleTriggerComposer(contact);
-                                }}
-                                className="bg-[#1D1D1B] hover:bg-[#2D2B28] text-[#FCFAF6] text-[0.82rem] font-semibold px-4.5 py-1.8 rounded transition-colors flex items-center justify-center space-x-1.5 shrink-0"
-                              >
-                                <Mail className="w-3.5 h-3.5" />
-                                <span>{item.btnLabel}</span>
-                              </button>
+                            {/* PROGRESSIVE DISCLOSURE */}
+                            <div className="mt-3.5 space-y-3">
+                              <div className="space-y-1">
+                                <div className="flex items-center gap-2">
+                                  <span className="text-[0.7rem] uppercase tracking-wider font-semibold text-[#A36A2B]">Why it matters</span>
+                                  <EvidenceDrawer
+                                    label={item.action}
+                                    variant="badge"
+                                    evidence={buildEvidence({
+                                      evidenceQuote: item.rawEvidenceQuote,
+                                      sourceType: item.rawEvidenceSource,
+                                      timestamp: item.rawLastInteraction ? formatRelativeTime(item.rawLastInteraction) : "Recently",
+                                      contactName: item.person,
+                                      confidence: item.rawConfidence,
+                                    })}
+                                  />
+                                </div>
+                                <p className="text-[0.88rem] text-[#6B655E] leading-relaxed font-light">
+                                  {item.why}
+                                </p>
+                              </div>
+
+                              <p className="text-[0.82rem] text-[#9A9287] italic font-light">
+                                {item.context}
+                              </p>
+
+                              {/* Action Buttons row (Send Draft + View history redirect) */}
+                              <div className="flex flex-col sm:flex-row items-stretch sm:items-center sm:justify-between gap-3 pt-2">
+                                <button
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    setSelectedContactId(item.contactId);
+                                    setActiveTab("people");
+                                  }}
+                                  className="text-[0.82rem] text-[#A36A2B] hover:text-[#1D1D1B] font-semibold underline underline-offset-2 transition-all text-left"
+                                >
+                                  View Relationship History
+                                </button>
+
+                                <button
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    const contact = contacts.find(c => c.id === item.contactId);
+                                    if (contact) handleTriggerComposer(contact);
+                                  }}
+                                  className="bg-[#1D1D1B] hover:bg-[#2D2B28] text-[#FCFAF6] text-[0.82rem] font-semibold px-4 py-1.5 rounded transition-colors flex items-center justify-center space-x-1.5 shrink-0"
+                                >
+                                  <Mail className="w-3.5 h-3.5" />
+                                  <span>{item.btnLabel}</span>
+                                </button>
+                              </div>
                             </div>
                           </div>
-                        )}
-                      </div>
-                    );
-                  })}
-                </div>
+                        );
+                      })()}
+                    </div>
 
-                <div className="text-center text-[0.75rem] text-[#9A9287] font-light">
-                  Use your wheel, trackpad, or ↑↓ keys to step through items.
+                    {/* Pagination Controls */}
+                    <div className="flex items-center justify-between px-2 pt-1">
+                      <div className="flex items-center space-x-1.5">
+                        <button
+                          onClick={() => setActiveStreamIndex((prev) => Math.max(prev - 1, 0))}
+                          disabled={activeStreamIndex === 0}
+                          className="p-1 rounded-md border border-[#EBE6D9] hover:bg-[#FCFAF6] disabled:opacity-30 transition-all cursor-pointer"
+                        >
+                          <svg className="w-4 h-4 text-[#6B655E]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 19l-7-7 7-7"></path></svg>
+                        </button>
+                        <button
+                          onClick={() => setActiveStreamIndex((prev) => Math.min(prev + 1, streamItems.length - 1))}
+                          disabled={activeStreamIndex === streamItems.length - 1}
+                          className="p-1 rounded-md border border-[#EBE6D9] hover:bg-[#FCFAF6] disabled:opacity-30 transition-all cursor-pointer"
+                        >
+                          <svg className="w-4 h-4 text-[#6B655E]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5l7 7-7 7"></path></svg>
+                        </button>
+                      </div>
+
+                      {/* Dots Indicators */}
+                      <div className="flex items-center space-x-1.5">
+                        {streamItems.map((_, idx) => (
+                          <button
+                            key={idx}
+                            onClick={() => setActiveStreamIndex(idx)}
+                            className={`w-1.5 h-1.5 rounded-full transition-all duration-300 cursor-pointer ${
+                              idx === activeStreamIndex ? "bg-[#A36A2B] scale-125" : "bg-[#EBE6D9] hover:bg-[#9A9287]"
+                            }`}
+                          />
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="bg-[#FCFAF6]/60 border border-[#EBE6D9] rounded-xl p-8 text-center text-[#6B655E] font-light">
+                    No active attention items in queue.
+                  </div>
+                )}
+
+                <div className="text-center text-[0.75rem] text-[#9A9287] font-light pt-2">
+                  Hover & scroll/wheel inside the card, use ↑↓ keys, or click arrows to cycle items.
                 </div>
               </div>
 
             </div>
+
+            {/* Re-engagement Pipeline Section */}
+            {contacts.filter(c => c.state === "reengagement_candidate").length > 0 && (
+              <section className="space-y-6 pt-10 border-t border-[#EBE6D9]">
+                <div className="border-b border-[#EBE6D9] pb-2">
+                  <h3 className="text-[0.78rem] tracking-wider uppercase font-semibold text-[#6B655E]">
+                    Re-engagement Opportunities
+                  </h3>
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                  {contacts
+                    .filter(c => c.state === "reengagement_candidate")
+                    .map(contact => (
+                      <div key={contact.id} className="bg-[#FCFAF6]/60 border border-[#EBE6D9] rounded-xl p-5 space-y-3 flex flex-col justify-between hover:bg-[#FCFAF6] transition-all">
+                        <div className="space-y-2">
+                          <div className="flex items-baseline justify-between">
+                            <div className="flex items-baseline space-x-2">
+                              <h4 className="font-display font-medium text-[1.05rem] text-[#1D1D1B]">{contact.name}</h4>
+                              <span className="text-[0.78rem] text-[#6B655E]">{contact.company}</span>
+                            </div>
+                          </div>
+                          <p className="text-[0.88rem] text-[#6B655E] font-light leading-relaxed line-clamp-2">
+                            {contact.summary}
+                          </p>
+                          {contact.recommendedAction && (
+                            <div className="bg-[#FAF9F6] border border-[#EBE6D9]/50 rounded-lg p-2.5 mt-2">
+                              <span className="text-[0.7rem] uppercase tracking-wider font-semibold text-[#A36A2B] block">Suggested Re-engagement</span>
+                              <span className="text-[0.85rem] text-[#1D1D1B] font-light">{contact.recommendedAction}</span>
+                            </div>
+                          )}
+                        </div>
+                        <div className="flex items-center space-x-3 pt-2 text-[0.8rem]">
+                          <button
+                            onClick={() => handleTriggerComposer(contact)}
+                            className="text-[#A36A2B] hover:text-[#1D1D1B] font-medium underline underline-offset-2 transition-all cursor-pointer"
+                          >
+                            Draft Message
+                          </button>
+                          <span className="text-[#EBE6D9]">•</span>
+                          <button 
+                            onClick={() => {
+                              setSelectedContactId(contact.id);
+                              setActiveTab("people");
+                            }}
+                            className="text-[#6B655E] hover:text-[#1D1D1B] cursor-pointer"
+                          >
+                            View Dossier
+                          </button>
+                        </div>
+                      </div>
+                    ))}
+                </div>
+              </section>
+            )}
 
             {/* Sync & Activity Logs */}
             <section className="pt-10 border-t border-[#EBE6D9] space-y-4 text-[0.85rem] text-[#6B655E]">
