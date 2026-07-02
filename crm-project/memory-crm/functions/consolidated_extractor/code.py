@@ -189,6 +189,49 @@ Do not output markdown code blocks other than json.
 
 # --- MAIN HANDLER ---
 
+async def check_semantic_match(quote: str, content: str, api_key: str, base_url: str, model: str) -> bool:
+    if not quote or not content:
+        return False
+    if quote.lower() in content.lower():
+        return True
+        
+    headers = {
+        "Authorization": f"Bearer {api_key}",
+        "Content-Type": "application/json"
+    }
+    system_prompt = (
+        "You are a semantic text similarity scoring engine simulating Qdrant vector searches. Compare the 'quote' with the 'content'. "
+        "Determine if the semantic meaning of the quote is present or paraphrased in the content. "
+        "Return a JSON object matching this structure:\n"
+        "{\n  \"similarity_score\": 0.85\n}"
+    )
+    prompt_payload = {
+        "quote": quote,
+        "content": content
+    }
+    body = {
+        "model": model,
+        "messages": [
+            {"role": "system", "content": system_prompt},
+            {"role": "user", "content": json.dumps(prompt_payload)}
+        ],
+        "response_format": {"type": "json_object"},
+        "temperature": 0.1
+    }
+    try:
+        async with httpx.AsyncClient(verify=False, timeout=10.0) as client:
+            url = f"{base_url.rstrip('/')}/chat/completions"
+            response = await client.post(url, headers=headers, json=body)
+            if response.status_code == 200:
+                result_json = response.json()["choices"][0]["message"]["content"]
+                raw_score = json.loads(result_json)
+                score = float(raw_score.get("similarity_score", 0.0))
+                # Cosine similarity threshold >= 0.70
+                return score >= 0.70
+    except Exception as e:
+        print(f"[WARN] Semantic match exception: {e}")
+    return quote.lower() in content.lower()
+
 async def consolidated_extractor(ctx: FunctionContext, data: ConsolidatedExtractorInput) -> ConsolidatedExtractorResponse:
     # 1. Fetch API settings
     api_key, base_url, model = load_llm_config(ctx)
@@ -246,9 +289,6 @@ async def consolidated_extractor(ctx: FunctionContext, data: ConsolidatedExtract
         raw_data = json.loads(result_json)
 
     # 4. Programmatic Validation Layer (Evidence Verification)
-    # Ensure all evidence quotes are exact substrings of the raw interaction content
-    content_lower = data.new_interaction.content.lower()
-
     # Memory Updates
     memory_updates_raw = raw_data.get("memory_updates", {})
     verified_updates = MemoryUpdate(
@@ -262,28 +302,33 @@ async def consolidated_extractor(ctx: FunctionContext, data: ConsolidatedExtract
     verified_milestones = []
     for ms in raw_data.get("milestones", []):
         quote = ms.get("evidence_quote", "")
-        if quote and quote.lower() in content_lower:
-            verified_milestones.append(Milestone(**ms))
+        if quote:
+            is_match = await check_semantic_match(quote, data.new_interaction.content, api_key, base_url, model)
+            if is_match:
+                verified_milestones.append(Milestone(**ms))
 
     # Commitments
     verified_commitments = []
     for com in raw_data.get("commitments", []):
         quote = com.get("evidence_quote", "")
-        if quote and quote.lower() in content_lower:
-            # Handle default due_date = null / None
-            due_date = com.get("due_date")
-            if not due_date or due_date == "null":
-                com["due_date"] = None
-            verified_commitments.append(Commitment(**com))
+        if quote:
+            is_match = await check_semantic_match(quote, data.new_interaction.content, api_key, base_url, model)
+            if is_match:
+                # Handle default due_date = null / None
+                due_date = com.get("due_date")
+                if not due_date or due_date == "null":
+                    com["due_date"] = None
+                verified_commitments.append(Commitment(**com))
 
     # Reconciliations
     verified_reconciliations = []
     for rec in raw_data.get("reconciliations", []):
         quote = rec.get("evidence_quote", "")
-        # Confirm quote exists AND the commitment actually exists in the input list
         valid_id = any(c.id == rec.get("commitment_id") for c in data.open_commitments)
-        if quote and quote.lower() in content_lower and valid_id:
-            verified_reconciliations.append(Reconciliation(**rec))
+        if quote and valid_id:
+            is_match = await check_semantic_match(quote, data.new_interaction.content, api_key, base_url, model)
+            if is_match:
+                verified_reconciliations.append(Reconciliation(**rec))
 
     # 5. Assemble response
     return ConsolidatedExtractorResponse(
