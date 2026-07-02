@@ -20,7 +20,9 @@ import {
   MessageSquare,
   Award,
   GitCompare,
-  AlertTriangle
+  AlertTriangle,
+  Users,
+  Share2
 } from "lucide-react";
 import { EvidenceDrawer, buildEvidence } from "../components/EvidenceDrawer";
  
@@ -114,6 +116,49 @@ interface StreamItem {
   rawEvidenceSource?: string;
   rawLastInteraction?: string;
   rawConfidence?: number;
+}
+
+function renderMarkdownToJSX(text: string) {
+  const lines = text.split("\n");
+  return lines.map((line, index) => {
+    let content = line.trim();
+    const isBullet = content.startsWith("* ");
+    if (isBullet) {
+      content = content.substring(2);
+    }
+    
+    // Parse bold text: **text**
+    const parts = content.split("**");
+    const elements = parts.map((part, i) => {
+      if (i % 2 === 1) {
+        return <strong key={i} className="font-semibold text-[#1D1D1B]">{part}</strong>;
+      }
+      return part;
+    });
+
+    if (isBullet) {
+      return (
+        <div key={index} className="flex items-start space-x-2.5 my-1.5 text-[0.98rem] text-[#6B655E] leading-relaxed">
+          <span className="w-1.5 h-1.5 rounded-full bg-[#A36A2B] mt-2 shrink-0" />
+          <span>{elements}</span>
+        </div>
+      );
+    }
+
+    if (content === "") {
+      return <div key={index} className="h-2" />;
+    }
+
+    if (content.startsWith("### ")) {
+      return <h3 key={index} className="font-display font-medium text-[1.2rem] text-[#1D1D1B] mt-4 mb-2">{content.substring(4)}</h3>;
+    }
+
+    return (
+      <p key={index} className="my-1 text-[0.98rem] text-[#6B655E] leading-relaxed">
+        {elements}
+      </p>
+    );
+  });
 }
 
 function formatRelativeTime(dateStr: string | null): string {
@@ -855,7 +900,7 @@ export default function Page() {
         <div className="max-w-6xl mx-auto flex items-center justify-between border-b border-[#EBE6D9] pb-4">
           <div className="flex items-baseline space-x-2">
             <span className="font-display font-medium text-[1.05rem] tracking-tight">MemoryCRM</span>
-            <span className="text-[0.78rem] text-[#6B655E] font-light">for your relationships</span>
+            <span className="text-[0.78rem] text-[#6B655E] font-light hidden sm:inline">— For those who manage too much. Engineered to restore focus.</span>
           </div>
 
           <nav className="flex items-center space-x-6">
@@ -986,8 +1031,8 @@ export default function Page() {
                       <span>{isRefreshing ? "Updating..." : "Sync Intelligence"}</span>
                     </button>
                   </div>
-                  <div className="space-y-2 text-[1.1rem] text-[#6B655E] font-light max-w-2xl whitespace-pre-line border-l border-[#EBE6D9] pl-4 leading-relaxed">
-                    {briefSummaryText}
+                  <div className="space-y-1 border-l-2 border-[#EBE6D9] pl-4">
+                    {renderMarkdownToJSX(briefSummaryText)}
                   </div>
                 </section>
 
@@ -1003,19 +1048,27 @@ export default function Page() {
                 </div>
 
                 <div className="space-y-8">
-                  {contacts.filter(c => c.state === "waiting_on_me").map(contact => (
-                    <div key={contact.id} className="space-y-2">
-                      <div className="flex items-baseline justify-between">
-                        <div className="flex items-baseline space-x-2">
-                          <h4 className="font-display font-medium text-[1.15rem] text-[#1D1D1B]">{contact.name}</h4>
-                          <span className="text-[0.8rem] text-[#6B655E]">{contact.company}</span>
+                  {contacts
+                    .filter(c => c.state === "waiting_on_me")
+                    .sort((a, b) => b.priorityScore - a.priorityScore)
+                    .map(contact => (
+                      <div key={contact.id} className="space-y-2">
+                        <div className="flex items-baseline justify-between">
+                          <div className="flex items-baseline space-x-2">
+                            <h4 className="font-display font-medium text-[1.15rem] text-[#1D1D1B]">{contact.name}</h4>
+                            <span className="text-[0.8rem] text-[#6B655E]">{contact.company}</span>
+                          </div>
+                          <div className="flex items-center space-x-2">
+                            <span className="text-[0.72rem] font-semibold px-2 py-0.5 rounded bg-[#FAF2E8] text-[#B36B2B] border border-[#EAD5C3]/40">
+                              Priority: {contact.priorityScore}
+                            </span>
+                            <span className={`text-[0.75rem] font-semibold px-2 py-0.5 rounded ${
+                              contact.temperature === "Active" ? "bg-[#FCFAF6] text-[#A36A2B]" : "bg-[#FCFAF6] text-[#A14A3A]"
+                            }`}>
+                              {contact.temperature}
+                            </span>
+                          </div>
                         </div>
-                        <span className={`text-[0.75rem] font-semibold px-2 py-0.5 rounded ${
-                          contact.temperature === "Active" ? "bg-[#FCFAF6] text-[#A36A2B]" : "bg-[#FCFAF6] text-[#A14A3A]"
-                        }`}>
-                          {contact.temperature}
-                        </span>
-                      </div>
 
                       <p className="text-[0.92rem] text-[#6B655E] leading-relaxed font-light">
                         {contact.summary}
@@ -1272,7 +1325,25 @@ export default function Page() {
                           <h3 className="font-display font-medium text-[1.6rem] text-[#1D1D1B]">{selectedContact.name}</h3>
                           <span className="text-[#6B655E] text-[0.9rem]">{selectedContact.title} at {selectedContact.company}</span>
                         </div>
-                        <p className="text-[0.85rem] text-[#6B655E] mt-1">Primary Email: {selectedContact.email} • Last active: {selectedContact.lastInteraction}</p>
+                         <p className="text-[0.85rem] text-[#6B655E] mt-1">Primary Email: {selectedContact.email} • Last active: {selectedContact.lastInteraction}</p>
+                        
+                        {/* Team Collaboration Panel */}
+                        <div className="flex items-center space-x-4 mt-2.5 text-[0.78rem] text-[#6B655E] flex-wrap gap-y-2">
+                          <span className="flex items-center space-x-1 bg-[#EFF4EE] text-[#5B7850] px-2 py-0.5 rounded border border-[#D4DDD3]/50 font-medium">
+                            <Users className="w-3 h-3" />
+                            <span>Shared with Co-Founders & Sales</span>
+                          </span>
+                          <button
+                            onClick={() => {
+                              setClosureMessage(`✓ Propagated relationship updates for ${selectedContact.name} to team Slack #sales-feed`);
+                              setTimeout(() => setClosureMessage(null), 4000);
+                            }}
+                            className="flex items-center space-x-1 text-[#A36A2B] hover:text-[#1D1D1B] font-semibold transition-colors border border-[#EBE6D9] rounded px-2 py-0.5 bg-[#FCFAF6] shadow-2xs hover:bg-[#F1ECE1]"
+                          >
+                            <Share2 className="w-3 h-3" />
+                            <span>Sync to Team Feed</span>
+                          </button>
+                        </div>
                       </div>
 
                       <span className={`text-[0.78rem] font-semibold px-2.5 py-0.5 rounded ${

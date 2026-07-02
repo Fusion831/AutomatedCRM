@@ -161,6 +161,68 @@ def main():
                 ]),
                 "recommendation_urgency": "LOW",
                 "recommended_action": "Share recent SDK launch announcement."
+            },
+            {
+                "id": "8a8a8a8a-8a8a-4a8a-aa8a-8a8a8a8a8a8a",
+                "name": "Lina Alvarez",
+                "relationship_state": "waiting_on_me",
+                "tier": "A",
+                "who_are_they": "Lead Product Manager at ScaleAI",
+                "why_talking": "Evaluating real-time webhook routing for LLM outputs.",
+                "key_drivers": json.dumps({
+                    "drivers": ["Real-time webhook latency guarantees", "Highly reliable event dispatching"],
+                    "objections": ["Integration schema complexity"]
+                }),
+                "memory_confidence": json.dumps({"Webhook routing evaluation": 0.92}),
+                "priority_score": 80,
+                "priority_reasons": json.dumps([
+                    "Awaiting founder action: share API credentials",
+                    "Tier A priority"
+                ]),
+                "last_interaction": (datetime.utcnow() - timedelta(hours=12)).isoformat() + "Z",
+                "expected_next_touch_date": (date.today() + timedelta(days=1)).isoformat(),
+                "attention_level": "HIGH",
+                "recommendation_category": "RESPOND",
+                "recommendation_confidence": 90,
+                "recommendation_evidence": json.dumps([
+                    "Lina: Let me know when we can get our sandbox tokens to test the relays."
+                ]),
+                "recommendation_reasoning": json.dumps([
+                    "ScaleAI needs to run validation tests this week."
+                ]),
+                "recommendation_urgency": "HIGH",
+                "recommended_action": "Send webhook API documentation and sandbox access credentials."
+            },
+            {
+                "id": "7c7c7c7c-7c7c-4c7c-ac7c-7c7c7c7c7c7c",
+                "name": "Marcus Vance",
+                "relationship_state": "mutual_exploration",
+                "tier": "B",
+                "who_are_they": "CEO at CyberFlow",
+                "why_talking": "Exploring strategic developer tools collaboration.",
+                "key_drivers": json.dumps({
+                    "drivers": ["Toolchain integrations", "Leveraging open-source ecosystem"],
+                    "objections": ["Overlapping features in developer SDKs"]
+                }),
+                "memory_confidence": json.dumps({"Developer ecosystem partnership": 0.85}),
+                "priority_score": 45,
+                "priority_reasons": json.dumps([
+                    "Tier B relationship partnership opportunity",
+                    "Introduce to engineering leads"
+                ]),
+                "last_interaction": (datetime.utcnow() - timedelta(days=4)).isoformat() + "Z",
+                "expected_next_touch_date": (date.today() + timedelta(days=5)).isoformat(),
+                "attention_level": "MEDIUM",
+                "recommendation_category": "FOLLOW_UP",
+                "recommendation_confidence": 80,
+                "recommendation_evidence": json.dumps([
+                    "Marcus: Let's loop in our tech leads next time we speak."
+                ]),
+                "recommendation_reasoning": json.dumps([
+                    "Need to schedule intro call for engineering sync."
+                ]),
+                "recommendation_urgency": "MEDIUM",
+                "recommended_action": "Introduce Marcus to the engineering team and schedule a sync."
             }
         ]
         
@@ -202,6 +264,22 @@ def main():
                 "type": "email",
                 "summary": "Sent webhook relays specs. Michael replied noting interest, but pointed out they need security audit reports beforehand.",
                 "occurred_at": (datetime.utcnow() - timedelta(days=10)).isoformat() + "Z"
+            },
+            # Lina Alvarez
+            {
+                "id": "8c8c8c8c-8c8c-4c8c-ac8c-8c8c8c8c8c8c",
+                "contact_id": "8a8a8a8a-8a8a-4a8a-aa8a-8a8a8a8a8a8a",
+                "type": "slack",
+                "summary": "Lina: We want to evaluate the real-time webhook routing sandbox. Can you share API docs and credentials? I said I will send it by tomorrow.",
+                "occurred_at": (datetime.utcnow() - timedelta(hours=12)).isoformat() + "Z"
+            },
+            # Marcus Vance
+            {
+                "id": "7d7d7d7d-7d7d-4d7d-ad7d-7d7d7d7d7d7d",
+                "contact_id": "7c7c7c7c-7c7c-4c7c-ac7c-7c7c7c7c7c7c",
+                "type": "meeting",
+                "summary": "Intro meeting with Marcus. Discussed potential toolchain integration and ecosystem partnerships. He requested to loop in tech leads.",
+                "occurred_at": (datetime.utcnow() - timedelta(days=4)).isoformat() + "Z"
             }
         ]
         
@@ -258,6 +336,18 @@ def main():
                 "confidence": 95,
                 "due_date": (date.today() + timedelta(days=4)).isoformat(),
                 "evidence_quote": "need security audit reports beforehand"
+            },
+            # Lina Alvarez
+            {
+                "id": "8d8d8d8d-8d8d-4d8d-ad8d-8d8d8d8d8d8d",
+                "contact_id": "8a8a8a8a-8a8a-4a8a-aa8a-8a8a8a8a8a8a",
+                "interaction_id": "8c8c8c8c-8c8c-4c8c-ac8c-8c8c8c8c8c8c",
+                "owner": "founder",
+                "description": "Send webhook API documentation and sandbox access credentials",
+                "status": "open",
+                "confidence": 95,
+                "due_date": (date.today() + timedelta(days=1)).isoformat(),
+                "evidence_quote": "Lina: Let me know when we can get our sandbox tokens to test the relays."
             }
         ]
         
@@ -325,6 +415,22 @@ def main():
                 "new_recommendation": "Share recent SDK launch announcement.",
                 "reason": "Elena requested public launch ping.",
                 "created_at": (datetime.utcnow() - timedelta(days=35)).isoformat() + "Z"
+            },
+            {
+                "id": "9e9e9e9e-9e9e-9e9e-9e9e-9e9e-9e9e-9e9e",
+                "contact_id": "8a8a8a8a-8a8a-4a8a-aa8a-8a8a8a8a8a8a",
+                "previous_recommendation": "None",
+                "new_recommendation": "Send webhook API documentation and sandbox access credentials.",
+                "reason": "Lina requested sandbox tokens to validate webhook routing relays.",
+                "created_at": (datetime.utcnow() - timedelta(hours=12)).isoformat() + "Z"
+            },
+            {
+                "id": "9f9f9f9f-9f9f-9f9f-9f9f-9f9f-9f9f-9f9f",
+                "contact_id": "7c7c7c7c-7c7c-4c7c-ac7c-7c7c7c7c7c7c",
+                "previous_recommendation": "None",
+                "new_recommendation": "Introduce Marcus to the engineering team and schedule a sync.",
+                "reason": "Marcus requested to loop in tech leads next time.",
+                "created_at": (datetime.utcnow() - timedelta(days=4)).isoformat() + "Z"
             }
         ]
         for rh in rec_histories:
@@ -336,9 +442,11 @@ def main():
         brief_summary = (
             "### Morning Intelligence Summary\n\n"
             "* **Sarah Jenkins (Horizon Ventures)** is waiting on you for Series A financial projections. Action required today.\n"
+            "* **Lina Alvarez (ScaleAI)** is waiting on you for webhook API credentials. Action required today.\n"
             "* **Michael Chen (ByteSize)** contact is cooling down (no interaction for 10 days). Consider a casual catch-up ping.\n"
             "* **Rahul Sharma (Acme Corp.)** is waiting on their review of your pricing deck. Status: Waiting on Them.\n"
-            "* **Elena Rostova (CloudFlare)** is a candidate for re-engagement with your public SDK launch details."
+            "* **Elena Rostova (CloudFlare)** is a candidate for re-engagement with your public SDK launch details.\n"
+            "* **Marcus Vance (CyberFlow)** is exploring developer toolchain partnerships. Status: Mutual Exploration."
         )
         pod.table("daily_briefs").create({
             "id": "08a52e92-0921-4191-bf90-d727cace8f1a",
