@@ -1,5 +1,5 @@
 "use client";
-
+ 
 import React, { useState, useEffect, useRef } from "react";
 import {
   Sparkles,
@@ -16,10 +16,14 @@ import {
   Sliders,
   ChevronRight,
   RefreshCw,
-  Check
+  Check,
+  MessageSquare,
+  Award,
+  GitCompare,
+  AlertTriangle
 } from "lucide-react";
 import { EvidenceDrawer, buildEvidence } from "../components/EvidenceDrawer";
-
+ 
 import {
   fetchAllContacts,
   fetchAllCommitments,
@@ -34,12 +38,14 @@ import {
   triggerRecommendationGeneration,
   runQuery
 } from "../lib/lemmaClient";
-
+ 
 // ============================================================================
 // TYPE DEFINITIONS
 // ============================================================================
-
+ 
 interface TimelineEvent {
+  type: "milestone" | "interaction" | "state_change";
+  title: string;
   timeframe: string;
   description: string;
   // evidence fields from relationship_milestones
@@ -258,7 +264,13 @@ export default function Page() {
       }
 
       const allMilestones = await runQuery("SELECT * FROM relationship_milestones ORDER BY occurred_at DESC");
-
+      let allStateHistory: any[] = [];
+      try {
+        allStateHistory = await runQuery("SELECT * FROM relationship_state_history ORDER BY changed_at DESC");
+      } catch (e) {
+        console.warn("Failed to fetch state history:", e);
+      }
+ 
       const mappedContacts: Contact[] = dbContacts.map(c => {
         const who = c.who_are_they || "";
         const company = who.split(" at ")[1] || "Independent";
@@ -268,12 +280,12 @@ export default function Page() {
         if (c.relationship_state === "blocked") temp = "Cold";
         else if (c.relationship_state === "cooling") temp = "Cooling down";
         else if (c.relationship_state === "reengagement_candidate") temp = "Reviving";
-
+ 
         let state: Contact["state"] = "mutual_exploration";
         if (c.relationship_state === "waiting_on_me" || c.relationship_state === "waiting_on_them") {
           state = c.relationship_state;
         }
-
+ 
         let drivers: string[] = [];
         let objections: string[] = [];
         if (c.key_drivers) {
@@ -291,17 +303,72 @@ export default function Page() {
             drivers = [String(c.key_drivers)];
           }
         }
-
+ 
+        // Build unified event-based timeline
         const contactMilestones = allMilestones.filter((m: any) => m.contact_id === c.id);
-        const timeline = contactMilestones.map((m: any) => ({
-          timeframe: formatRelativeTime(m.occurred_at),
-          description: m.summary,
-          evidenceQuote: m.evidence_quote || undefined,
-          evidenceSource: m.source_type || "meeting",
-          occurredAt: m.occurred_at || undefined,
-          contactName: c.name,
-        }));
-
+        const contactInteractions = dbInteractions.filter((i: any) => i.contact_id === c.id);
+        const contactStateHistory = allStateHistory.filter((h: any) => h.contact_id === c.id);
+ 
+        const timelineEvents: TimelineEvent[] = [];
+ 
+        // 1. Add Milestones
+        contactMilestones.forEach((m: any) => {
+          timelineEvents.push({
+            type: "milestone",
+            title: `Key Milestone (Importance: ${m.importance_score}/100)`,
+            timeframe: formatRelativeTime(m.occurred_at),
+            description: m.summary,
+            evidenceQuote: m.evidence_quote || undefined,
+            evidenceSource: m.source_type || "meeting",
+            occurredAt: m.occurred_at || undefined,
+            contactName: c.name,
+          });
+        });
+ 
+        // 2. Add Interactions
+        contactInteractions.forEach((i: any) => {
+          timelineEvents.push({
+            type: "interaction",
+            title: `Interaction via ${i.type.toUpperCase()}`,
+            timeframe: formatRelativeTime(i.occurred_at),
+            description: i.summary,
+            evidenceSource: i.type,
+            occurredAt: i.occurred_at || undefined,
+            contactName: c.name,
+          });
+        });
+ 
+        // 3. Add State Changes
+        contactStateHistory.forEach((h: any) => {
+          const stateLabel = (s: string) => s.replace(/_/g, " ").replace(/\b\w/g, val => val.toUpperCase());
+          timelineEvents.push({
+            type: "state_change",
+            title: `State Transition`,
+            timeframe: formatRelativeTime(h.changed_at),
+            description: `Moved from ${stateLabel(h.old_state)} to ${stateLabel(h.new_state)}${h.reason ? `: ${h.reason}` : ""}`,
+            occurredAt: h.changed_at || undefined,
+            contactName: c.name,
+          });
+        });
+ 
+        // Sort by occurredAt descending
+        timelineEvents.sort((a, b) => {
+          const timeA = a.occurredAt ? new Date(a.occurredAt).getTime() : 0;
+          const timeB = b.occurredAt ? new Date(b.occurredAt).getTime() : 0;
+          return timeB - timeA;
+        });
+ 
+        const timeline = timelineEvents.length > 0 ? timelineEvents : [
+          {
+            type: "state_change" as const,
+            title: "Relationship Initialized",
+            timeframe: "Initial",
+            description: "Contact added to MemoryCRM.",
+            occurredAt: c.last_interaction || new Date().toISOString(),
+            contactName: c.name
+          }
+        ];
+ 
         // Extract raw recommendation evidence
         const rawEvidenceArr = c.recommendation_evidence as any;
         let rawEvidenceQuote: string | undefined;
@@ -311,7 +378,7 @@ export default function Page() {
         } else if (Array.isArray(rawEvidenceArr) && rawEvidenceArr.length > 0) {
           rawEvidenceQuote = String(rawEvidenceArr[0]);
         }
-
+ 
         return {
           id: c.id,
           name: c.name,
@@ -326,7 +393,7 @@ export default function Page() {
           thesis: c.why_talking || "No strategic thesis established.",
           drivers: drivers.length > 0 ? drivers : ["Relationship context established"],
           objections: objections,
-          timeline: timeline.length > 0 ? timeline : [{ timeframe: "Initial", description: "Contact added to MemoryCRM." }],
+          timeline,
           recommendedAction: c.recommended_action || "No immediate action required.",
           rawEvidenceQuote,
           rawEvidenceSource: c.recommendation_category?.toLowerCase() || "meeting",
@@ -1268,27 +1335,72 @@ export default function Page() {
 
                     {/* Narrative Timeline */}
                     <div className="space-y-4">
-                      <h4 className="text-[0.72rem] uppercase tracking-widest font-semibold text-[#6B655E]">Recent Activity</h4>
+                      <h4 className="text-[0.72rem] uppercase tracking-widest font-semibold text-[#6B655E]">Narrative Relationship Timeline</h4>
                       
-                      <div className="relative pl-4 border-l border-[#EBE6D9] space-y-6">
-                        {selectedContact.timeline.map((evt, idx) => (
-                          <div key={idx} className="relative">
-                            <span className="absolute -left-[20px] top-1.5 w-2 h-2 rounded-full bg-[#D5CBB5] border border-[#F8F5EF]" />
-                            <div className="space-y-0.5">
-                              <span className="text-[0.8rem] font-semibold text-[#A36A2B]">{evt.timeframe}</span>
-                              <p className="text-[0.9rem] text-[#6B655E] font-light">{evt.description}</p>
-                              <EvidenceDrawer
-                                label={evt.description}
-                                evidence={buildEvidence({
-                                  evidenceQuote: evt.evidenceQuote,
-                                  sourceType: evt.evidenceSource,
-                                  timestamp: evt.timeframe,
-                                  contactName: evt.contactName,
-                                })}
-                              />
+                      <div className="relative pl-6 border-l-2 border-[#EBE6D9]/70 space-y-6">
+                        {selectedContact.timeline.map((evt, idx) => {
+                          let icon = <Clock className="w-3.5 h-3.5" />;
+                          let iconBg = "bg-[#FCFAF6] border-[#D5CBB5]";
+                          let iconColor = "text-[#6B655E]";
+                          let tagText = "";
+                          let tagStyle = "";
+
+                          if (evt.type === "milestone") {
+                            icon = <Award className="w-3.5 h-3.5" />;
+                            iconBg = "bg-[#FDF9F2] border-[#EAD5C3]";
+                            iconColor = "text-[#B36B2B]";
+                            tagText = "Milestone";
+                            tagStyle = "bg-[#FAF2E8] text-[#B36B2B]";
+                          } else if (evt.type === "interaction") {
+                            icon = <MessageSquare className="w-3.5 h-3.5" />;
+                            iconBg = "bg-[#FAFBF9] border-[#D4DDD3]";
+                            iconColor = "text-[#5B7850]";
+                            tagText = "Interaction";
+                            tagStyle = "bg-[#EFF4EE] text-[#5B7850]";
+                          } else if (evt.type === "state_change") {
+                            icon = <GitCompare className="w-3.5 h-3.5" />;
+                            iconBg = "bg-[#FAF9FB] border-[#DDD3E8]";
+                            iconColor = "text-[#7B5B9E]";
+                            tagText = "State Change";
+                            tagStyle = "bg-[#F4EEFA] text-[#7B5B9E]";
+                          }
+
+                          return (
+                            <div key={idx} className="relative group">
+                              {/* Timeline indicator node */}
+                              <div className={`absolute -left-[35px] top-1.5 w-6 h-6 rounded-full border flex items-center justify-center shadow-xs transition-transform duration-200 group-hover:scale-110 ${iconBg} ${iconColor}`}>
+                                {icon}
+                              </div>
+                              <div className="space-y-1.5 p-3 rounded-lg border border-transparent hover:border-[#EBE6D9]/55 hover:bg-[#FCFAF6]/40 transition-all duration-200">
+                                <div className="flex items-center justify-between gap-2 flex-wrap">
+                                  <div className="flex items-center space-x-2">
+                                    <span className="text-[0.82rem] font-medium text-[#1D1D1B]">{evt.title}</span>
+                                    {tagText && (
+                                      <span className={`text-[0.68rem] px-1.5 py-0.2 rounded-md font-medium uppercase tracking-wider ${tagStyle}`}>
+                                        {tagText}
+                                      </span>
+                                    )}
+                                  </div>
+                                  <span className="text-[0.78rem] text-[#9A9287] font-medium">{evt.timeframe}</span>
+                                </div>
+                                <p className="text-[0.88rem] text-[#6B655E] font-light leading-relaxed">{evt.description}</p>
+                                {evt.evidenceQuote && (
+                                  <div className="pt-0.5">
+                                    <EvidenceDrawer
+                                      label={evt.description}
+                                      evidence={buildEvidence({
+                                        evidenceQuote: evt.evidenceQuote,
+                                        sourceType: evt.evidenceSource,
+                                        timestamp: evt.timeframe,
+                                        contactName: evt.contactName,
+                                      })}
+                                    />
+                                  </div>
+                                )}
+                              </div>
                             </div>
-                          </div>
-                        ))}
+                          );
+                        })}
                       </div>
                     </div>
 
