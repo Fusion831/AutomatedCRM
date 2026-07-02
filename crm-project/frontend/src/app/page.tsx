@@ -133,9 +133,48 @@ function formatRelativeTime(dateStr: string | null): string {
   }
 }
 
+const DEMO_SCENARIOS = [
+  {
+    id: 1,
+    title: "Investor Follow-Up",
+    contactName: "Sarah Jenkins",
+    company: "Horizon Ventures",
+    channel: "meeting" as const,
+    description: "Sarah requests custom data after a partner meeting. Watch the engine extract commitments, increase priority score, and generate a recommended email draft.",
+    transcript: `[Zoom call — June 30, 2026]\n\nDaksh: Sarah, thanks for making time. Did you get a chance to review the migration case study I sent?\n\nSarah: Yes! The Acme migration numbers were impressive. I shared them with my partners. We're ready to move to the next step. Can you send over the full financial model and a term sheet outline by Friday? If those look good, we'll book the formal partner meeting for next week.\n\nDaksh: Absolutely. I'll get the model and draft term sheet to you by Thursday EOD.\n\nSarah: Perfect. One more thing — our compliance team needs your SOC 2 report. Can you include that?\n\nDaksh: Will do. I'll package everything together.`
+  },
+  {
+    id: 2,
+    title: "Contract Negotiation",
+    contactName: "Rahul Sharma",
+    company: "Acme Corp",
+    channel: "email" as const,
+    description: "Rahul raises objections about SLAs and DPAs. Watch the reconciliation engine detect new open loops, transition the relationship state to waiting_on_them, and change the recommended action.",
+    transcript: `From: rahul@acmecorp.com\nTo: daksh@memorycrm.com\nSubject: Re: Observability Proposal\n\nHi Daksh,\n\nTeam has reviewed the pricing deck — we're aligned on the Enterprise tier. A few things before we sign:\n\n1. We need a custom SLA with 99.95% uptime guarantee.\n2. Our legal team wants a data processing agreement (DPA) before contract sign-off.\n3. Can we schedule a technical deep-dive with your eng team next week?\n\nIf you can confirm these, we're ready to move to contract stage.\n\nBest,\nRahul`
+  },
+  {
+    id: 3,
+    title: "Re-engagement",
+    contactName: "Elena Rostova",
+    company: "CloudFlare",
+    channel: "email" as const,
+    description: "Elena replies to resurrection email, requesting a meeting. Watch the relationship state revive from cooling/reengagement_candidate, recalculate priority, and update the narrative timeline.",
+    transcript: `From: elena@cloudflare.com\nTo: daksh@memorycrm.com\nSubject: Re: SDK Launch\n\nHi Daksh,\n\nSaw the Lemma SDK launch announcement — congratulations! The edge compute use case you described is exactly what we've been looking for.\n\nOur team has capacity to start a channel partnership evaluation in Q3. I'd like to set up a call with our VP of Partnerships. Are you available the week of July 14th?\n\nAlso, could you send over your partnership deck and pricing for volume resellers?\n\nLooking forward to reconnecting.\n\nElena`
+  },
+  {
+    id: 4,
+    title: "New Relationship",
+    contactName: "Maya Lin",
+    company: "Scale AI",
+    channel: "meeting" as const,
+    description: "Initialize a completely new relationship from a first-meeting transcript. Watch the system auto-create the contact, analyze motivators, and bootstrap the timeline.",
+    transcript: `[Meeting notes — June 30, 2026]\nFirst intro call with Maya Lin, co-founder of Scale AI.\n\nMaya was interested in our relationship memory system. She mentioned that her team of 15 founders has been struggling with tracking investor follow-ups and keeping warm intros alive.\n\nMaya: I promised to send her our team pricing deck and schedule a demo for her co-founders next Tuesday.\n\nMaya mentioned they have a board meeting in two weeks where they'll decide on their CRM budget.`
+  }
+];
+
 export default function Page() {
   // Navigation State
-  const [activeTab, setActiveTab] = useState<"today" | "people" | "inbox" | "import">("today");
+  const [activeTab, setActiveTab] = useState<"today" | "people" | "inbox" | "import" | "demo">("today");
 
   // Core State
   const [contacts, setContacts] = useState<Contact[]>([]);
@@ -179,6 +218,16 @@ export default function Page() {
     contactName: string;
     before: { state: string; priority: number; commitments: number; recommendation: string };
     after:  { state: string; priority: number; commitments: number; recommendation: string };
+  } | null>(null);
+
+  // Demo Scenario State
+  const [demoStage, setDemoStage] = useState<"idle" | "processing" | "done">("idle");
+  const [activeDemoScenario, setActiveDemoScenario] = useState<number | null>(null);
+  const [demoDiff, setDemoDiff] = useState<{
+    contactName: string;
+    before: { state: string; priority: number; commitments: number; recommendation: string };
+    after:  { state: string; priority: number; commitments: number; recommendation: string };
+    contactId: string;
   } | null>(null);
 
   const selectedContact = contacts.find(c => c.id === selectedContactId) || contacts[0];
@@ -597,6 +646,83 @@ export default function Page() {
     setImportStage("idle");
   };
 
+  const handleRunDemoScenario = async (scenarioId: number) => {
+    setDemoStage("processing");
+    setActiveDemoScenario(scenarioId);
+    setDemoDiff(null);
+
+    const scenario = DEMO_SCENARIOS.find(s => s.id === scenarioId)!;
+
+    let targetContactId = "";
+    let beforeState = "None (New Contact)";
+    let beforePriority = 0;
+    let beforeCommitmentsCount = 0;
+    let beforeRec = "None";
+
+    if (scenarioId !== 4) {
+      // Find existing contact
+      const match = contacts.find(c => c.name.includes(scenario.contactName));
+      if (match) {
+        targetContactId = match.id;
+        const contactComms = commitments.filter(c => c.contactId === targetContactId && c.status === "open").length;
+        beforeState = match.state;
+        beforePriority = match.priorityScore;
+        beforeCommitmentsCount = contactComms;
+        beforeRec = match.recommendedAction ?? "None";
+      }
+    }
+
+    const before = {
+      state: beforeState,
+      priority: beforePriority,
+      commitments: beforeCommitmentsCount,
+      recommendation: beforeRec
+    };
+
+    try {
+      if (scenarioId === 4) {
+        // Create new contact first
+        const newContact = await createRecord("contacts", {
+          name: "Maya Lin",
+          relationship_state: "mutual_exploration",
+          tier: "B",
+          priority_score: 50,
+          who_are_they: "Maya Lin at Scale AI"
+        });
+        targetContactId = newContact.id;
+      }
+
+      await ingestNewInteraction(targetContactId, scenario.channel, scenario.transcript);
+
+      // Wait 4.5 seconds for the extraction engine, priority, and workflows to propagate
+      await new Promise(r => setTimeout(r, 4500));
+      await loadAllData(targetContactId);
+
+      // Query freshly updated values directly from DB to avoid closures
+      const freshContacts = await import("../lib/lemmaClient").then(m => m.fetchAllContacts());
+      const freshContact = freshContacts.find((c: any) => c.id === targetContactId);
+      const freshCommitments = await import("../lib/lemmaClient").then(m => m.fetchAllCommitments());
+      const freshCommCount = freshCommitments.filter((c: any) => c.contact_id === targetContactId && c.status === "open").length;
+
+      setDemoDiff({
+        contactName: scenario.contactName,
+        before,
+        after: {
+          state: freshContact?.relationship_state ?? before.state,
+          priority: freshContact?.priority_score ?? before.priority,
+          commitments: freshCommCount,
+          recommendation: freshContact?.recommended_action ?? before.recommendation
+        },
+        contactId: targetContactId
+      });
+
+      setDemoStage("done");
+    } catch (err) {
+      console.error("Demo scenario run failed:", err);
+      setDemoStage("idle");
+    }
+  };
+
   // Compose Trigger
   const handleTriggerComposer = (contact: Contact) => {
     let draftBody = `Hi ${contact.name.split(" ")[0]},\n\nGreat speaking recently. I wanted to follow up on our discussion regarding ${contact.summary.toLowerCase()}.\n\nLet me know when you're free to catch up.\n\nBest,\nDaksh`;
@@ -705,6 +831,16 @@ export default function Page() {
               }`}
             >
               Import
+            </button>
+            <button
+              onClick={() => setActiveTab("demo")}
+              className={`text-[0.9rem] transition-colors relative py-1 ${
+                activeTab === "demo"
+                  ? "text-[#1D1D1B] font-medium border-b border-[#1D1D1B]"
+                  : "text-[#6B655E] hover:text-[#1D1D1B]"
+              }`}
+            >
+              Demo Scenarios
             </button>
           </nav>
 
@@ -1482,6 +1618,170 @@ export default function Page() {
               </div>
             )}
 
+          </div>
+        )}
+
+        {/* =====================================================================
+            DEMO SCENARIO CENTER VIEW
+            ===================================================================== */}
+        {activeTab === "demo" && (
+          <div className="space-y-10 animate-in fade-in duration-200">
+            {/* Header */}
+            <div className="space-y-1">
+              <h2 className="font-display text-[1.8rem] font-semibold tracking-tight">Demo Scenario Center</h2>
+              <p className="text-[#6B655E] text-[0.9rem] font-light">
+                Instantly trigger realistic business relationship changes and watch MemoryCRM adapt in real-time.
+              </p>
+            </div>
+
+            {demoStage === "idle" && (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                {DEMO_SCENARIOS.map((scenario) => (
+                  <div key={scenario.id} className="bg-[#FCFAF6] border border-[#EBE6D9] rounded-xl p-6 flex flex-col justify-between space-y-4 hover:border-[#D5CBB5] transition-all">
+                    <div className="space-y-2">
+                      <div className="flex items-center justify-between">
+                        <h3 className="font-display font-semibold text-[1.15rem] text-[#1D1D1B]">
+                          {scenario.title}
+                        </h3>
+                        <span className="text-[0.72rem] bg-[#F1ECE1] text-[#A36A2B] px-2 py-0.5 rounded font-semibold border border-[#D5CBB5] capitalize">
+                          {scenario.channel}
+                        </span>
+                      </div>
+                      <p className="text-[0.85rem] text-[#6B655E] font-light leading-relaxed">
+                        {scenario.description}
+                      </p>
+                      <div className="bg-[#F8F5EF]/60 p-3 rounded-lg border border-[#EBE6D9]/50">
+                        <span className="text-[0.68rem] uppercase tracking-wider font-semibold text-[#6B655E] block mb-1">Target Contact</span>
+                        <span className="text-[0.85rem] font-medium text-[#1D1D1B]">{scenario.contactName} ({scenario.company})</span>
+                      </div>
+                    </div>
+
+                    <button
+                      onClick={() => handleRunDemoScenario(scenario.id)}
+                      className="w-full bg-[#1D1D1B] hover:bg-[#2D2B28] text-[#FCFAF6] text-[0.82rem] font-semibold py-2 rounded-lg transition-colors text-center"
+                    >
+                      Run Scenario
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {/* Pipeline Progress */}
+            {demoStage === "processing" && (
+              <div className="bg-[#FCFAF6] border border-[#EBE6D9] rounded-xl p-8 space-y-6 max-w-xl mx-auto">
+                <div className="flex items-center space-x-3">
+                  <RefreshCw className="w-5 h-5 text-[#A36A2B] animate-spin" />
+                  <h3 className="font-display font-semibold text-[1.1rem]">Running Cognitive Pipeline...</h3>
+                </div>
+                <div className="space-y-3">
+                  {[
+                    "Ingesting interaction transcript...",
+                    "Extracting semantic commitments & facts...",
+                    "Reconciling relationship states...",
+                    "Updating target priority profile...",
+                    "Re-evaluating follow-up recommendations..."
+                  ].map((step, i) => (
+                    <div key={i} className="flex items-center space-x-3 text-[0.88rem]">
+                      <div className="w-2 h-2 rounded-full bg-[#A36A2B] animate-pulse" />
+                      <span className="text-[#6B655E] font-light">{step}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Change Summary Diff */}
+            {demoStage === "done" && demoDiff && (
+              <div className="space-y-6 max-w-2xl mx-auto animate-in fade-in duration-300">
+                <div className="flex items-center justify-between border-b border-[#EBE6D9] pb-3">
+                  <div>
+                    <h3 className="font-display text-[1.3rem] font-semibold">Change Summary</h3>
+                    <p className="text-[#6B655E] text-[0.82rem]">Scenario execution completed successfully.</p>
+                  </div>
+                  <span className="text-[0.72rem] bg-[#F1ECE1] text-[#A36A2B] px-2.5 py-1 rounded-full font-semibold border border-[#D5CBB5]">Pipeline Complete</span>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  {/* State */}
+                  <div className="bg-[#FCFAF6] border border-[#EBE6D9] rounded-xl p-4 space-y-2">
+                    <p className="text-[0.7rem] uppercase tracking-wider font-semibold text-[#6B655E]">Relationship State</p>
+                    <div className="flex items-center space-x-2 text-[0.88rem]">
+                      <span className="line-through text-[#9A9287]">{demoDiff.before.state.replace(/_/g, " ")}</span>
+                      <ChevronRight className="w-3.5 h-3.5 text-[#A36A2B]" />
+                      <span className={`font-semibold ${
+                        demoDiff.after.state !== demoDiff.before.state ? "text-[#A36A2B]" : "text-[#1D1D1B]"
+                      }`}>{demoDiff.after.state.replace(/_/g, " ")}</span>
+                    </div>
+                  </div>
+
+                  {/* Priority */}
+                  <div className="bg-[#FCFAF6] border border-[#EBE6D9] rounded-xl p-4 space-y-2">
+                    <p className="text-[0.7rem] uppercase tracking-wider font-semibold text-[#6B655E]">Priority Score</p>
+                    <div className="flex items-center space-x-2 text-[0.88rem]">
+                      <span className="line-through text-[#9A9287]">{demoDiff.before.priority}</span>
+                      <ChevronRight className="w-3.5 h-3.5 text-[#A36A2B]" />
+                      <span className={`font-semibold ${
+                        demoDiff.after.priority !== demoDiff.before.priority ? "text-[#A36A2B]" : "text-[#1D1D1B]"
+                      }`}>{demoDiff.after.priority}</span>
+                    </div>
+                  </div>
+
+                  {/* Commitments */}
+                  <div className="bg-[#FCFAF6] border border-[#EBE6D9] rounded-xl p-4 space-y-2">
+                    <p className="text-[0.7rem] uppercase tracking-wider font-semibold text-[#6B655E]">Open Commitments</p>
+                    <div className="flex items-center space-x-2 text-[0.88rem]">
+                      <span className="line-through text-[#9A9287]">{demoDiff.before.commitments}</span>
+                      <ChevronRight className="w-3.5 h-3.5 text-[#A36A2B]" />
+                      <span className={`font-semibold ${
+                        demoDiff.after.commitments !== demoDiff.before.commitments ? "text-[#A36A2B]" : "text-[#1D1D1B]"
+                      }`}>{demoDiff.after.commitments}</span>
+                    </div>
+                  </div>
+
+                  {/* Recommendation */}
+                  <div className="bg-[#FCFAF6] border border-[#EBE6D9] rounded-xl p-4 space-y-2">
+                    <p className="text-[0.7rem] uppercase tracking-wider font-semibold text-[#6B655E]">Recommendation</p>
+                    <div className="flex flex-col space-y-1 text-[0.82rem]">
+                      <span className="line-through text-[#9A9287] leading-tight">{demoDiff.before.recommendation}</span>
+                      <span className={`font-semibold leading-tight ${
+                        demoDiff.after.recommendation !== demoDiff.before.recommendation ? "text-[#A36A2B]" : "text-[#1D1D1B]"
+                      }`}>{demoDiff.after.recommendation}</span>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="flex items-center space-x-4 pt-4 border-t border-[#EBE6D9]">
+                  <button
+                    onClick={() => {
+                      setActiveTab("today");
+                      loadAllData(demoDiff.contactId);
+                    }}
+                    className="bg-[#1D1D1B] hover:bg-[#2D2B28] text-[#FCFAF6] text-[0.85rem] font-semibold px-5 py-2.5 rounded-lg transition-colors"
+                  >
+                    Go to Dashboard
+                  </button>
+                  <button
+                    onClick={() => {
+                      setSelectedContactId(demoDiff.contactId);
+                      setActiveTab("people");
+                    }}
+                    className="border border-[#EBE6D9] text-[#1D1D1B] text-[0.85rem] px-5 py-2.5 rounded-lg hover:border-[#D5CBB5] transition-colors"
+                  >
+                    View Relationship Dossier
+                  </button>
+                  <button
+                    onClick={() => {
+                      setDemoDiff(null);
+                      setDemoStage("idle");
+                    }}
+                    className="text-[0.82rem] text-[#6B655E] hover:text-[#1D1D1B] ml-auto font-medium"
+                  >
+                    Run Another Scenario
+                  </button>
+                </div>
+              </div>
+            )}
           </div>
         )}
           </>
